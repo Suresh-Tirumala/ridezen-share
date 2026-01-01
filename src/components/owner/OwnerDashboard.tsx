@@ -1,0 +1,215 @@
+import { useState } from "react";
+import { useAuth } from "@/contexts/AuthContext";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Car, Plus, Settings, User, LogOut, Eye, EyeOff, Trash2 } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+
+export default function OwnerDashboard() {
+  const { user, profile, signOut } = useAuth();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const [showProfile, setShowProfile] = useState(false);
+  const [addVehicleOpen, setAddVehicleOpen] = useState(false);
+
+  // Form state
+  const [vehicleType, setVehicleType] = useState<string>("");
+  const [regNumber, setRegNumber] = useState("");
+  const [brand, setBrand] = useState("");
+  const [model, setModel] = useState("");
+  const [pricePerDay, setPricePerDay] = useState("");
+
+  const { data: vehicles = [], isLoading } = useQuery({
+    queryKey: ["owner-vehicles", user?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("vehicles")
+        .select("*")
+        .eq("owner_id", user?.id)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!user,
+  });
+
+  const addVehicleMutation = useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase.from("vehicles").insert({
+        owner_id: user?.id,
+        vehicle_type: vehicleType as "car" | "bike" | "auto" | "bus",
+        registration_number: regNumber,
+        brand,
+        model,
+        price_per_day: parseFloat(pricePerDay),
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["owner-vehicles"] });
+      setAddVehicleOpen(false);
+      setVehicleType("");
+      setRegNumber("");
+      setBrand("");
+      setModel("");
+      setPricePerDay("");
+      toast({ title: "Vehicle added successfully!" });
+    },
+    onError: (error: Error) => {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    },
+  });
+
+  const toggleVehicle = async (id: string, isDisabled: boolean) => {
+    await supabase.from("vehicles").update({ is_disabled: !isDisabled }).eq("id", id);
+    queryClient.invalidateQueries({ queryKey: ["owner-vehicles"] });
+  };
+
+  const deleteVehicle = async (id: string) => {
+    await supabase.from("vehicles").delete().eq("id", id);
+    queryClient.invalidateQueries({ queryKey: ["owner-vehicles"] });
+    toast({ title: "Vehicle removed" });
+  };
+
+  return (
+    <div className="min-h-screen bg-background">
+      {/* Top Navigation */}
+      <header className="sticky top-0 z-50 glass border-b border-border/50 px-4 py-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="h-10 w-10 bg-gradient-accent rounded-xl flex items-center justify-center">
+              <Car className="h-5 w-5 text-accent-foreground" />
+            </div>
+            <span className="text-xl font-bold">Owner Dashboard</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button variant="ghost" size="icon" onClick={() => setShowProfile(!showProfile)}>
+              <User className="h-5 w-5" />
+            </Button>
+            <Button variant="ghost" size="icon">
+              <Settings className="h-5 w-5" />
+            </Button>
+          </div>
+        </div>
+      </header>
+
+      {/* Profile Dropdown */}
+      {showProfile && (
+        <div className="absolute right-4 top-16 z-50 animate-scale-in">
+          <Card variant="elevated" className="w-72 p-4">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="h-12 w-12 bg-primary/10 rounded-full flex items-center justify-center">
+                <User className="h-6 w-6 text-primary" />
+              </div>
+              <div>
+                <p className="font-semibold">{profile?.full_name || "Owner"}</p>
+                <p className="text-sm text-muted-foreground">{profile?.email}</p>
+              </div>
+            </div>
+            {profile?.phone && (
+              <p className="text-sm text-muted-foreground mb-4">📞 {profile.phone}</p>
+            )}
+            <Button variant="destructive" className="w-full" onClick={signOut}>
+              <LogOut className="h-4 w-4 mr-2" /> Sign Out
+            </Button>
+          </Card>
+        </div>
+      )}
+
+      {/* Main Content */}
+      <main className="p-4 space-y-6 animate-fade-in">
+        {/* Add Vehicle Button */}
+        <Dialog open={addVehicleOpen} onOpenChange={setAddVehicleOpen}>
+          <DialogTrigger asChild>
+            <Button variant="accent" className="w-full" size="lg">
+              <Plus className="h-5 w-5 mr-2" /> Add New Vehicle
+            </Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Add New Vehicle</DialogTitle>
+            </DialogHeader>
+            <form onSubmit={(e) => { e.preventDefault(); addVehicleMutation.mutate(); }} className="space-y-4 mt-4">
+              <div>
+                <Label>Vehicle Type</Label>
+                <Select value={vehicleType} onValueChange={setVehicleType}>
+                  <SelectTrigger><SelectValue placeholder="Select type" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="car">🚗 Car</SelectItem>
+                    <SelectItem value="bike">🏍️ Bike</SelectItem>
+                    <SelectItem value="auto">🛺 Auto</SelectItem>
+                    <SelectItem value="bus">🚌 Bus</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label>Registration Number</Label>
+                <Input value={regNumber} onChange={(e) => setRegNumber(e.target.value)} placeholder="ABC-1234" />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div><Label>Brand</Label><Input value={brand} onChange={(e) => setBrand(e.target.value)} placeholder="Toyota" /></div>
+                <div><Label>Model</Label><Input value={model} onChange={(e) => setModel(e.target.value)} placeholder="Camry" /></div>
+              </div>
+              <div>
+                <Label>Price per Day ($)</Label>
+                <Input type="number" value={pricePerDay} onChange={(e) => setPricePerDay(e.target.value)} placeholder="50" />
+              </div>
+              <Button type="submit" className="w-full" disabled={addVehicleMutation.isPending}>
+                {addVehicleMutation.isPending ? "Adding..." : "Add Vehicle"}
+              </Button>
+            </form>
+          </DialogContent>
+        </Dialog>
+
+        {/* Vehicles List */}
+        <section>
+          <h2 className="text-lg font-bold mb-3">Your Vehicles</h2>
+          {isLoading ? (
+            <div className="text-center py-8 text-muted-foreground">Loading...</div>
+          ) : vehicles.length === 0 ? (
+            <Card variant="glass" className="p-8 text-center">
+              <Car className="h-12 w-12 mx-auto text-muted-foreground mb-2" />
+              <p className="text-muted-foreground">No vehicles yet. Add your first vehicle!</p>
+            </Card>
+          ) : (
+            <div className="grid gap-4">
+              {vehicles.map((vehicle) => (
+                <Card key={vehicle.id} variant="interactive" className="p-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="text-3xl">
+                        {vehicle.vehicle_type === "car" ? "🚗" : vehicle.vehicle_type === "bike" ? "🏍️" : vehicle.vehicle_type === "auto" ? "🛺" : "🚌"}
+                      </div>
+                      <div>
+                        <p className="font-semibold">{vehicle.brand} {vehicle.model}</p>
+                        <p className="text-sm text-muted-foreground">{vehicle.registration_number}</p>
+                        <p className="text-sm font-semibold text-primary">${vehicle.price_per_day}/day</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${vehicle.is_disabled ? "bg-destructive/10 text-destructive" : vehicle.is_available ? "bg-success/10 text-success" : "bg-warning/10 text-warning"}`}>
+                        {vehicle.is_disabled ? "Disabled" : vehicle.is_available ? "Available" : "Booked"}
+                      </span>
+                      <Button variant="ghost" size="iconSm" onClick={() => toggleVehicle(vehicle.id, vehicle.is_disabled || false)}>
+                        {vehicle.is_disabled ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
+                      </Button>
+                      <Button variant="ghost" size="iconSm" onClick={() => deleteVehicle(vehicle.id)}>
+                        <Trash2 className="h-4 w-4 text-destructive" />
+                      </Button>
+                    </div>
+                  </div>
+                </Card>
+              ))}
+            </div>
+          )}
+        </section>
+      </main>
+    </div>
+  );
+}
