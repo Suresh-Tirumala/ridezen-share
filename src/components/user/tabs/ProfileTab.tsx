@@ -15,8 +15,10 @@ import {
   X, 
   Calendar,
   IndianRupee,
-  LogOut
+  LogOut,
+  History
 } from "lucide-react";
+import { VehicleThumbnail } from "@/components/vehicle/VehicleThumbnail";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -26,12 +28,23 @@ interface Booking {
   end_date: string;
   total_price: number;
   status: string | null;
+  vehicle_id: string;
   vehicle: {
     brand: string | null;
     model: string | null;
     vehicle_type: string;
     images: string[] | null;
   } | null;
+}
+
+interface VehicleHistory {
+  id: string;
+  brand: string | null;
+  model: string | null;
+  vehicle_type: string;
+  images: string[] | null;
+  rental_count: number;
+  last_rented: string;
 }
 
 export default function ProfileTab() {
@@ -42,12 +55,15 @@ export default function ProfileTab() {
     phone: profile?.phone || "",
   });
   const [bookings, setBookings] = useState<Booking[]>([]);
+  const [vehicleHistory, setVehicleHistory] = useState<VehicleHistory[]>([]);
   const [loadingBookings, setLoadingBookings] = useState(true);
+  const [loadingHistory, setLoadingHistory] = useState(true);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     if (user) {
       fetchBookings();
+      fetchVehicleHistory();
     }
   }, [user]);
 
@@ -96,6 +112,57 @@ export default function ProfileTab() {
       console.error("Error fetching bookings:", error);
     } finally {
       setLoadingBookings(false);
+    }
+  };
+
+  const fetchVehicleHistory = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("bookings")
+        .select(`
+          vehicle_id,
+          start_date
+        `)
+        .eq("user_id", user?.id)
+        .order("start_date", { ascending: false });
+
+      if (error) throw error;
+
+      // Get unique vehicles with rental count
+      const vehicleMap = new Map<string, { count: number; lastRented: string }>();
+      (data || []).forEach((booking) => {
+        const existing = vehicleMap.get(booking.vehicle_id);
+        if (existing) {
+          existing.count++;
+        } else {
+          vehicleMap.set(booking.vehicle_id, { count: 1, lastRented: booking.start_date });
+        }
+      });
+
+      // Fetch vehicle details for unique vehicles
+      const vehicleIds = Array.from(vehicleMap.keys());
+      if (vehicleIds.length > 0) {
+        const { data: vehicles } = await supabase
+          .from("vehicles")
+          .select("id, brand, model, vehicle_type, images")
+          .in("id", vehicleIds);
+
+        const historyData: VehicleHistory[] = (vehicles || []).map((v) => ({
+          id: v.id,
+          brand: v.brand,
+          model: v.model,
+          vehicle_type: v.vehicle_type,
+          images: v.images,
+          rental_count: vehicleMap.get(v.id)?.count || 1,
+          last_rented: vehicleMap.get(v.id)?.lastRented || ""
+        }));
+
+        setVehicleHistory(historyData);
+      }
+    } catch (error) {
+      console.error("Error fetching vehicle history:", error);
+    } finally {
+      setLoadingHistory(false);
     }
   };
 
@@ -261,6 +328,58 @@ export default function ProfileTab() {
                     >
                       {booking.status || "pending"}
                     </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Vehicle History */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <History className="h-5 w-5" />
+            Vehicle History
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {loadingHistory ? (
+            <div className="flex justify-center py-4">
+              <div className="h-6 w-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+            </div>
+          ) : vehicleHistory.length === 0 ? (
+            <p className="text-sm text-muted-foreground text-center py-4">
+              No vehicles rented yet
+            </p>
+          ) : (
+            <div className="space-y-3">
+              {vehicleHistory.map((vehicle) => (
+                <div
+                  key={vehicle.id}
+                  className="flex items-center gap-3 p-3 rounded-lg bg-muted/50"
+                >
+                  <VehicleThumbnail
+                    images={vehicle.images}
+                    vehicleType={vehicle.vehicle_type}
+                    className="w-12 h-12"
+                  />
+                  <div className="flex-1">
+                    <p className="font-medium text-sm">
+                      {vehicle.brand} {vehicle.model}
+                    </p>
+                    <p className="text-xs text-muted-foreground capitalize">
+                      {vehicle.vehicle_type}
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <p className="font-semibold text-sm">
+                      {vehicle.rental_count}x rented
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      Last: {new Date(vehicle.last_rented).toLocaleDateString()}
+                    </p>
                   </div>
                 </div>
               ))}
