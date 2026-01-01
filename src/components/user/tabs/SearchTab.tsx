@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Search, Car, MessageCircle, MapPin, X } from "lucide-react";
+import { Search, Car, MessageCircle, MapPin, X, User } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -19,9 +19,10 @@ interface Vehicle {
 
 interface SearchTabProps {
   onChatWithOwner: (ownerId: string, vehicleId: string) => void;
+  onViewOwner: (ownerId: string) => void;
 }
 
-export default function SearchTab({ onChatWithOwner }: SearchTabProps) {
+export default function SearchTab({ onChatWithOwner, onViewOwner }: SearchTabProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [loading, setLoading] = useState(false);
@@ -162,15 +163,25 @@ export default function SearchTab({ onChatWithOwner }: SearchTabProps) {
                       )}
                       <div className="flex items-center justify-between mt-2">
                         <p className="text-lg font-bold text-primary">₹{vehicle.price_per_day}/day</p>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => onChatWithOwner(vehicle.owner_id, vehicle.id)}
-                          className="gap-1"
-                        >
-                          <MessageCircle className="h-4 w-4" />
-                          Chat
-                        </Button>
+                        <div className="flex gap-1">
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => onViewOwner(vehicle.owner_id)}
+                            className="gap-1"
+                          >
+                            <User className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => onChatWithOwner(vehicle.owner_id, vehicle.id)}
+                            className="gap-1"
+                          >
+                            <MessageCircle className="h-4 w-4" />
+                            Chat
+                          </Button>
+                        </div>
                       </div>
                     </div>
                   </div>

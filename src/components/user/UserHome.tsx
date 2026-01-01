@@ -8,6 +8,8 @@ import HomeTab from "./tabs/HomeTab";
 import NearbyTab from "./tabs/NearbyTab";
 import SearchTab from "./tabs/SearchTab";
 import ProfileTab from "./tabs/ProfileTab";
+import OwnerProfileSheet from "./OwnerProfileSheet";
+import ChatScreen from "@/components/chat/ChatScreen";
 
 type TabType = "home" | "nearby" | "search" | "profile";
 
@@ -16,6 +18,14 @@ export default function UserHome() {
   const [activeTab, setActiveTab] = useState<TabType>("home");
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [displayTab, setDisplayTab] = useState<TabType>("home");
+  
+  // Owner profile sheet state
+  const [selectedOwnerId, setSelectedOwnerId] = useState<string | null>(null);
+  const [ownerSheetOpen, setOwnerSheetOpen] = useState(false);
+  
+  // Chat state
+  const [chatConversationId, setChatConversationId] = useState<string | null>(null);
+  const [chatOpen, setChatOpen] = useState(false);
 
   const handleTabChange = (newTab: TabType) => {
     if (newTab === activeTab) return;
@@ -28,33 +38,57 @@ export default function UserHome() {
     }, 200);
   };
 
-  const handleChatWithOwner = async (ownerId: string, vehicleId: string) => {
+  const handleViewOwnerProfile = (ownerId: string) => {
+    setSelectedOwnerId(ownerId);
+    setOwnerSheetOpen(true);
+  };
+
+  const handleChatWithOwner = async (ownerId: string, vehicleId?: string) => {
     if (!user) {
       toast.error("Please sign in to chat with owner");
       return;
     }
 
     try {
-      const { data: existingConvo } = await supabase
+      // Check for existing conversation
+      let query = supabase
         .from("conversations")
         .select("id")
         .eq("user_id", user.id)
-        .eq("owner_id", ownerId)
-        .eq("vehicle_id", vehicleId)
-        .single();
+        .eq("owner_id", ownerId);
+
+      if (vehicleId) {
+        query = query.eq("vehicle_id", vehicleId);
+      }
+
+      const { data: existingConvo } = await query.maybeSingle();
 
       if (existingConvo) {
-        toast.info("Opening chat with owner...");
+        setChatConversationId(existingConvo.id);
+        setChatOpen(true);
         return;
       }
 
-      const { error } = await supabase.from("conversations").insert({
+      // Create new conversation
+      const insertData: { user_id: string; owner_id: string; vehicle_id?: string } = {
         user_id: user.id,
         owner_id: ownerId,
-        vehicle_id: vehicleId,
-      });
+      };
+      
+      if (vehicleId) {
+        insertData.vehicle_id = vehicleId;
+      }
+
+      const { data: newConvo, error } = await supabase
+        .from("conversations")
+        .insert(insertData)
+        .select("id")
+        .single();
 
       if (error) throw error;
+      
+      setChatConversationId(newConvo.id);
+      setChatOpen(true);
       toast.success("Chat started with owner!");
     } catch (error) {
       console.error("Error starting chat:", error);
@@ -65,15 +99,15 @@ export default function UserHome() {
   const renderContent = () => {
     switch (displayTab) {
       case "home":
-        return <HomeTab onChatWithOwner={handleChatWithOwner} />;
+        return <HomeTab onChatWithOwner={handleChatWithOwner} onViewOwner={handleViewOwnerProfile} />;
       case "nearby":
-        return <NearbyTab onChatWithOwner={handleChatWithOwner} />;
+        return <NearbyTab onChatWithOwner={handleChatWithOwner} onViewOwner={handleViewOwnerProfile} />;
       case "search":
-        return <SearchTab onChatWithOwner={handleChatWithOwner} />;
+        return <SearchTab onChatWithOwner={handleChatWithOwner} onViewOwner={handleViewOwnerProfile} />;
       case "profile":
         return <ProfileTab />;
       default:
-        return <HomeTab onChatWithOwner={handleChatWithOwner} />;
+        return <HomeTab onChatWithOwner={handleChatWithOwner} onViewOwner={handleViewOwnerProfile} />;
     }
   };
 
@@ -139,6 +173,21 @@ export default function UserHome() {
           ))}
         </div>
       </nav>
+
+      {/* Owner Profile Sheet */}
+      <OwnerProfileSheet
+        ownerId={selectedOwnerId}
+        isOpen={ownerSheetOpen}
+        onClose={() => setOwnerSheetOpen(false)}
+        onChatWithOwner={handleChatWithOwner}
+      />
+
+      {/* Chat Screen */}
+      <ChatScreen
+        conversationId={chatConversationId}
+        isOpen={chatOpen}
+        onClose={() => setChatOpen(false)}
+      />
     </div>
   );
 }
