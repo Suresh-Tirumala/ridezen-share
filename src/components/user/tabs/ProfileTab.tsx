@@ -68,18 +68,30 @@ export default function ProfileTab() {
           end_date,
           total_price,
           status,
-          vehicle:vehicles (
-            brand,
-            model,
-            vehicle_type,
-            images
-          )
+          vehicle_id
         `)
         .eq("user_id", user?.id)
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      setBookings(data || []);
+      
+      // Fetch vehicle details separately for each booking
+      const bookingsWithVehicles = await Promise.all(
+        (data || []).map(async (booking) => {
+          const { data: vehicleData } = await supabase
+            .from("vehicles")
+            .select("brand, model, vehicle_type, images")
+            .eq("id", booking.vehicle_id)
+            .maybeSingle();
+          
+          return {
+            ...booking,
+            vehicle: vehicleData
+          };
+        })
+      );
+      
+      setBookings(bookingsWithVehicles);
     } catch (error) {
       console.error("Error fetching bookings:", error);
     } finally {
