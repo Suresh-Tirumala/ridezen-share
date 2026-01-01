@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { User, Phone, Mail, Car, MessageCircle, Star, MapPin, IndianRupee } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { VehicleThumbnail } from "@/components/vehicle/VehicleThumbnail";
 
 interface Vehicle {
   id: string;
@@ -79,15 +80,6 @@ export default function OwnerProfileSheet({
     }
   };
 
-  const getVehicleEmoji = (type: string) => {
-    switch (type) {
-      case "car": return "🚗";
-      case "bike": return "🏍️";
-      case "auto": return "🛺";
-      case "bus": return "🚌";
-      default: return "🚗";
-    }
-  };
 
   return (
     <Sheet open={isOpen} onOpenChange={onClose}>
@@ -167,17 +159,11 @@ export default function OwnerProfileSheet({
                   {vehicles.map((vehicle) => (
                     <Card key={vehicle.id} className="p-3 hover:shadow-md transition-shadow">
                       <div className="flex gap-3">
-                        <div className="w-20 h-16 rounded-lg bg-muted flex items-center justify-center overflow-hidden flex-shrink-0">
-                          {vehicle.images?.[0] ? (
-                            <img 
-                              src={vehicle.images[0]} 
-                              alt={`${vehicle.brand} ${vehicle.model}`} 
-                              className="w-full h-full object-cover" 
-                            />
-                          ) : (
-                            <span className="text-2xl">{getVehicleEmoji(vehicle.vehicle_type)}</span>
-                          )}
-                        </div>
+                        <VehicleThumbnail 
+                          vehicleType={vehicle.vehicle_type} 
+                          images={vehicle.images}
+                          className="w-20 h-16 rounded-lg flex-shrink-0"
+                        />
                         <div className="flex-1 min-w-0">
                           <p className="font-medium truncate">{vehicle.brand} {vehicle.model}</p>
                           {vehicle.location_address && (

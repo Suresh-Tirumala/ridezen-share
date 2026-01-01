@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { MapPin, Car, MessageCircle, Navigation, User } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { VehicleThumbnail } from "@/components/vehicle/VehicleThumbnail";
 
 interface Vehicle {
   id: string;
@@ -142,16 +143,12 @@ export default function NearbyTab({ onChatWithOwner, onViewOwner }: NearbyTabPro
           {vehicles.map((vehicle: Vehicle & { distance?: number }) => (
             <Card key={vehicle.id} variant="interactive" className="overflow-hidden">
               <div className="flex">
-                <div className="w-32 h-32 bg-muted flex items-center justify-center flex-shrink-0">
-                  {vehicle.images && vehicle.images[0] ? (
-                    <img
-                      src={vehicle.images[0]}
-                      alt={`${vehicle.brand} ${vehicle.model}`}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <Car className="h-12 w-12 text-muted-foreground" />
-                  )}
+                <div className="w-32 h-32 bg-muted flex items-center justify-center flex-shrink-0 overflow-hidden">
+                  <VehicleThumbnail 
+                    vehicleType={vehicle.vehicle_type} 
+                    images={vehicle.images} 
+                    className="w-full h-full rounded-none"
+                  />
                 </div>
                 <div className="flex-1 p-4">
                   <h3 className="font-semibold">

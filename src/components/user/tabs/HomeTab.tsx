@@ -5,6 +5,7 @@ import { Car, Bike, Bus, MessageCircle, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { VehicleThumbnail } from "@/components/vehicle/VehicleThumbnail";
 
 type VehicleType = "car" | "bike" | "auto" | "bus";
 
@@ -43,6 +44,29 @@ export default function HomeTab({ onChatWithOwner, onViewOwner }: HomeTabProps) 
 
   useEffect(() => {
     fetchVehicles();
+  }, [selectedCategory]);
+
+  // Subscribe to realtime vehicle changes
+  useEffect(() => {
+    const channel = supabase
+      .channel('vehicles-realtime')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'vehicles',
+        },
+        () => {
+          // Refetch vehicles when any change happens
+          fetchVehicles();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [selectedCategory]);
 
   const fetchVehicles = async () => {
@@ -133,16 +157,12 @@ export default function HomeTab({ onChatWithOwner, onViewOwner }: HomeTabProps) 
             {vehicles.map((vehicle) => (
               <Card key={vehicle.id} variant="interactive" className="overflow-hidden">
                 <div className="flex">
-                  <div className="w-32 h-32 bg-muted flex items-center justify-center flex-shrink-0">
-                    {vehicle.images && vehicle.images[0] ? (
-                      <img
-                        src={vehicle.images[0]}
-                        alt={`${vehicle.brand} ${vehicle.model}`}
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <Car className="h-12 w-12 text-muted-foreground" />
-                    )}
+                  <div className="w-32 h-32 bg-muted flex items-center justify-center flex-shrink-0 overflow-hidden">
+                    <VehicleThumbnail 
+                      vehicleType={vehicle.vehicle_type} 
+                      images={vehicle.images} 
+                      className="w-full h-full rounded-none"
+                    />
                   </div>
                   <div className="flex-1 p-4">
                     <h3 className="font-semibold">
