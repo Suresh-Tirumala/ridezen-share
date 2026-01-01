@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Car, Plus, Settings, User, LogOut, Eye, EyeOff, Trash2 } from "lucide-react";
+import { Car, Plus, Settings, User, LogOut, Eye, EyeOff, Trash2, MessageCircle } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,13 +11,19 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import VehicleImageUpload from "./VehicleImageUpload";
+import OwnerProfileSheet from "./OwnerProfileSheet";
+import ChatScreen from "@/components/chat/ChatScreen";
 
 export default function OwnerDashboard() {
   const { user, profile, signOut } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [showProfile, setShowProfile] = useState(false);
+  const [profileSheetOpen, setProfileSheetOpen] = useState(false);
   const [addVehicleOpen, setAddVehicleOpen] = useState(false);
+  
+  // Chat state
+  const [chatConversationId, setChatConversationId] = useState<string | null>(null);
+  const [chatOpen, setChatOpen] = useState(false);
 
   // Form state
   const [vehicleType, setVehicleType] = useState<string>("");
@@ -40,6 +46,31 @@ export default function OwnerDashboard() {
       return data;
     },
     enabled: !!user,
+  });
+
+  // Fetch unread message count
+  const { data: unreadCount = 0 } = useQuery({
+    queryKey: ["owner-unread-messages", user?.id],
+    queryFn: async () => {
+      const { data: conversations } = await supabase
+        .from("conversations")
+        .select("id")
+        .eq("owner_id", user?.id);
+
+      if (!conversations || conversations.length === 0) return 0;
+
+      const convoIds = conversations.map(c => c.id);
+      const { count } = await supabase
+        .from("messages")
+        .select("*", { count: "exact", head: true })
+        .in("conversation_id", convoIds)
+        .neq("sender_id", user?.id)
+        .eq("is_read", false);
+
+      return count || 0;
+    },
+    enabled: !!user,
+    refetchInterval: 30000, // Refresh every 30 seconds
   });
 
   const addVehicleMutation = useMutation({
@@ -84,6 +115,11 @@ export default function OwnerDashboard() {
     toast({ title: "Vehicle removed" });
   };
 
+  const handleOpenChat = (conversationId: string) => {
+    setChatConversationId(conversationId);
+    setChatOpen(true);
+  };
+
   return (
     <div className="min-h-screen bg-background">
       {/* Top Navigation */}
@@ -96,8 +132,18 @@ export default function OwnerDashboard() {
             <span className="text-xl font-bold">Owner Dashboard</span>
           </div>
           <div className="flex items-center gap-2">
-            <Button variant="ghost" size="icon" onClick={() => setShowProfile(!showProfile)}>
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="relative"
+              onClick={() => setProfileSheetOpen(true)}
+            >
               <User className="h-5 w-5" />
+              {unreadCount > 0 && (
+                <span className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-primary text-primary-foreground text-xs flex items-center justify-center">
+                  {unreadCount > 9 ? "9+" : unreadCount}
+                </span>
+              )}
             </Button>
             <Button variant="ghost" size="icon">
               <Settings className="h-5 w-5" />
@@ -105,29 +151,6 @@ export default function OwnerDashboard() {
           </div>
         </div>
       </header>
-
-      {/* Profile Dropdown */}
-      {showProfile && (
-        <div className="absolute right-4 top-16 z-50 animate-scale-in">
-          <Card variant="elevated" className="w-72 p-4">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="h-12 w-12 bg-primary/10 rounded-full flex items-center justify-center">
-                <User className="h-6 w-6 text-primary" />
-              </div>
-              <div>
-                <p className="font-semibold">{profile?.full_name || "Owner"}</p>
-                <p className="text-sm text-muted-foreground">{profile?.email}</p>
-              </div>
-            </div>
-            {profile?.phone && (
-              <p className="text-sm text-muted-foreground mb-4">📞 {profile.phone}</p>
-            )}
-            <Button variant="destructive" className="w-full" onClick={signOut}>
-              <LogOut className="h-4 w-4 mr-2" /> Sign Out
-            </Button>
-          </Card>
-        </div>
-      )}
 
       {/* Main Content */}
       <main className="p-4 space-y-6 animate-fade-in">
@@ -229,6 +252,21 @@ export default function OwnerDashboard() {
           )}
         </section>
       </main>
+
+      {/* Owner Profile Sheet */}
+      <OwnerProfileSheet
+        isOpen={profileSheetOpen}
+        onClose={() => setProfileSheetOpen(false)}
+        vehicles={vehicles}
+        onOpenChat={handleOpenChat}
+      />
+
+      {/* Chat Screen */}
+      <ChatScreen
+        conversationId={chatConversationId}
+        isOpen={chatOpen}
+        onClose={() => setChatOpen(false)}
+      />
     </div>
   );
 }
