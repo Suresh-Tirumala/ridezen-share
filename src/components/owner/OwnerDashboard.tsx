@@ -12,6 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import VehicleImageUpload from "./VehicleImageUpload";
 import OwnerProfileSheet from "./OwnerProfileSheet";
+import OwnerSettingsSheet from "./OwnerSettingsSheet";
 import ChatScreen from "@/components/chat/ChatScreen";
 
 export default function OwnerDashboard() {
@@ -19,6 +20,7 @@ export default function OwnerDashboard() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [profileSheetOpen, setProfileSheetOpen] = useState(false);
+  const [settingsSheetOpen, setSettingsSheetOpen] = useState(false);
   const [addVehicleOpen, setAddVehicleOpen] = useState(false);
   
   // Chat state
@@ -145,7 +147,7 @@ export default function OwnerDashboard() {
                 </span>
               )}
             </Button>
-            <Button variant="ghost" size="icon">
+            <Button variant="ghost" size="icon" onClick={() => setSettingsSheetOpen(true)}>
               <Settings className="h-5 w-5" />
             </Button>
           </div>
@@ -259,6 +261,12 @@ export default function OwnerDashboard() {
         onClose={() => setProfileSheetOpen(false)}
         vehicles={vehicles}
         onOpenChat={handleOpenChat}
+      />
+
+      {/* Settings Sheet */}
+      <OwnerSettingsSheet
+        isOpen={settingsSheetOpen}
+        onClose={() => setSettingsSheetOpen(false)}
       />
 
       {/* Chat Screen */}
