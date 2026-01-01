@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import VehicleImageUpload from "./VehicleImageUpload";
 
 export default function OwnerDashboard() {
   const { user, profile, signOut } = useAuth();
@@ -24,6 +25,8 @@ export default function OwnerDashboard() {
   const [brand, setBrand] = useState("");
   const [model, setModel] = useState("");
   const [pricePerDay, setPricePerDay] = useState("");
+  const [locationAddress, setLocationAddress] = useState("");
+  const [vehicleImages, setVehicleImages] = useState<string[]>([]);
 
   const { data: vehicles = [], isLoading } = useQuery({
     queryKey: ["owner-vehicles", user?.id],
@@ -48,6 +51,8 @@ export default function OwnerDashboard() {
         brand,
         model,
         price_per_day: parseFloat(pricePerDay),
+        location_address: locationAddress || null,
+        images: vehicleImages,
       });
       if (error) throw error;
     },
@@ -59,6 +64,8 @@ export default function OwnerDashboard() {
       setBrand("");
       setModel("");
       setPricePerDay("");
+      setLocationAddress("");
+      setVehicleImages([]);
       toast({ title: "Vehicle added successfully!" });
     },
     onError: (error: Error) => {
@@ -157,8 +164,20 @@ export default function OwnerDashboard() {
                 <div><Label>Model</Label><Input value={model} onChange={(e) => setModel(e.target.value)} placeholder="Camry" /></div>
               </div>
               <div>
-                <Label>Price per Day ($)</Label>
-                <Input type="number" value={pricePerDay} onChange={(e) => setPricePerDay(e.target.value)} placeholder="50" />
+                <Label>Price per Day (₹)</Label>
+                <Input type="number" value={pricePerDay} onChange={(e) => setPricePerDay(e.target.value)} placeholder="500" />
+              </div>
+              <div>
+                <Label>Location</Label>
+                <Input value={locationAddress} onChange={(e) => setLocationAddress(e.target.value)} placeholder="City, Area" />
+              </div>
+              <div>
+                <Label>Vehicle Images</Label>
+                <VehicleImageUpload 
+                  images={vehicleImages} 
+                  onImagesChange={setVehicleImages}
+                  maxImages={5}
+                />
               </div>
               <Button type="submit" className="w-full" disabled={addVehicleMutation.isPending}>
                 {addVehicleMutation.isPending ? "Adding..." : "Add Vehicle"}
