@@ -8,6 +8,8 @@ interface AuthContextType {
   user: User | null;
   session: Session | null;
   role: AppRole | null;
+  viewMode: AppRole | null;
+  setViewMode: (mode: AppRole) => void;
   profile: {
     full_name: string | null;
     email: string | null;
@@ -16,7 +18,7 @@ interface AuthContextType {
   } | null;
   loading: boolean;
   signUp: (email: string, password: string, fullName: string, role: AppRole) => Promise<{ error: Error | null }>;
-  signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
+  signIn: (email: string, password: string, viewAs?: AppRole) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
   updateProfile: (data: { full_name?: string; phone?: string; avatar_url?: string }) => Promise<{ error: Error | null }>;
 }
@@ -27,6 +29,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [role, setRole] = useState<AppRole | null>(null);
+  const [viewMode, setViewMode] = useState<AppRole | null>(null);
   const [profile, setProfile] = useState<AuthContextType["profile"]>(null);
   const [loading, setLoading] = useState(true);
 
@@ -111,11 +114,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return { error };
   };
 
-  const signIn = async (email: string, password: string) => {
+  const signIn = async (email: string, password: string, viewAs?: AppRole) => {
     const { error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
+
+    if (!error && viewAs) {
+      setViewMode(viewAs);
+    }
 
     return { error };
   };
@@ -123,6 +130,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signOut = async () => {
     await supabase.auth.signOut();
     setRole(null);
+    setViewMode(null);
     setProfile(null);
   };
 
@@ -147,6 +155,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         user,
         session,
         role,
+        viewMode,
+        setViewMode,
         profile,
         loading,
         signUp,

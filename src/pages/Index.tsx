@@ -5,7 +5,7 @@ import UserHome from "@/components/user/UserHome";
 import OwnerDashboard from "@/components/owner/OwnerDashboard";
 
 const Index = () => {
-  const { user, role, loading } = useAuth();
+  const { user, role, viewMode, loading } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -29,8 +29,10 @@ const Index = () => {
     return null;
   }
 
-  // Route based on role
-  if (role === "owner") {
+  // Use viewMode if set, otherwise fall back to actual role
+  const activeView = viewMode || role;
+
+  if (activeView === "owner") {
     return <OwnerDashboard />;
   }
 
