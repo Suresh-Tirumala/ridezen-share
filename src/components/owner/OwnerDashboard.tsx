@@ -14,6 +14,7 @@ import VehicleImageUpload from "./VehicleImageUpload";
 import OwnerProfileSheet from "./OwnerProfileSheet";
 import OwnerSettingsSheet from "./OwnerSettingsSheet";
 import ChatScreen from "@/components/chat/ChatScreen";
+import { VehicleThumbnail } from "@/components/vehicle/VehicleThumbnail";
 
 export default function OwnerDashboard() {
   const { user, profile, signOut } = useAuth();
@@ -227,9 +228,7 @@ export default function OwnerDashboard() {
                 <Card key={vehicle.id} variant="interactive" className="p-4">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <div className="text-3xl">
-                        {vehicle.vehicle_type === "car" ? "🚗" : vehicle.vehicle_type === "bike" ? "🏍️" : vehicle.vehicle_type === "auto" ? "🛺" : "🚌"}
-                      </div>
+                      <VehicleThumbnail vehicleType={vehicle.vehicle_type} images={vehicle.images} />
                       <div>
                         <p className="font-semibold">{vehicle.brand} {vehicle.model}</p>
                         <p className="text-sm text-muted-foreground">{vehicle.registration_number}</p>
