@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Car, Plus, Settings, User, LogOut, Eye, EyeOff, Trash2, MessageCircle } from "lucide-react";
+import { Car, Plus, Settings, User, LogOut, Eye, EyeOff, Trash2, MessageCircle, Pencil } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -16,6 +16,19 @@ import OwnerSettingsSheet from "./OwnerSettingsSheet";
 import ChatScreen from "@/components/chat/ChatScreen";
 import { VehicleThumbnail } from "@/components/vehicle/VehicleThumbnail";
 
+interface Vehicle {
+  id: string;
+  vehicle_type: "car" | "bike" | "auto" | "bus";
+  registration_number: string;
+  brand: string | null;
+  model: string | null;
+  price_per_day: number;
+  location_address: string | null;
+  images: string[] | null;
+  is_available: boolean | null;
+  is_disabled: boolean | null;
+}
+
 export default function OwnerDashboard() {
   const { user, profile, signOut } = useAuth();
   const { toast } = useToast();
@@ -24,11 +37,15 @@ export default function OwnerDashboard() {
   const [settingsSheetOpen, setSettingsSheetOpen] = useState(false);
   const [addVehicleOpen, setAddVehicleOpen] = useState(false);
   
+  // Edit vehicle state
+  const [editVehicleOpen, setEditVehicleOpen] = useState(false);
+  const [editingVehicle, setEditingVehicle] = useState<Vehicle | null>(null);
+  
   // Chat state
   const [chatConversationId, setChatConversationId] = useState<string | null>(null);
   const [chatOpen, setChatOpen] = useState(false);
 
-  // Form state
+  // Form state for add
   const [vehicleType, setVehicleType] = useState<string>("");
   const [regNumber, setRegNumber] = useState("");
   const [brand, setBrand] = useState("");
@@ -36,6 +53,15 @@ export default function OwnerDashboard() {
   const [pricePerDay, setPricePerDay] = useState("");
   const [locationAddress, setLocationAddress] = useState("");
   const [vehicleImages, setVehicleImages] = useState<string[]>([]);
+
+  // Form state for edit
+  const [editVehicleType, setEditVehicleType] = useState<string>("");
+  const [editRegNumber, setEditRegNumber] = useState("");
+  const [editBrand, setEditBrand] = useState("");
+  const [editModel, setEditModel] = useState("");
+  const [editPricePerDay, setEditPricePerDay] = useState("");
+  const [editLocationAddress, setEditLocationAddress] = useState("");
+  const [editVehicleImages, setEditVehicleImages] = useState<string[]>([]);
 
   const { data: vehicles = [], isLoading } = useQuery({
     queryKey: ["owner-vehicles", user?.id],
@@ -73,7 +99,7 @@ export default function OwnerDashboard() {
       return count || 0;
     },
     enabled: !!user,
-    refetchInterval: 30000, // Refresh every 30 seconds
+    refetchInterval: 30000,
   });
 
   const addVehicleMutation = useMutation({
@@ -106,6 +132,46 @@ export default function OwnerDashboard() {
       toast({ title: "Error", description: error.message, variant: "destructive" });
     },
   });
+
+  const editVehicleMutation = useMutation({
+    mutationFn: async () => {
+      if (!editingVehicle) return;
+      const { error } = await supabase
+        .from("vehicles")
+        .update({
+          vehicle_type: editVehicleType as "car" | "bike" | "auto" | "bus",
+          registration_number: editRegNumber,
+          brand: editBrand,
+          model: editModel,
+          price_per_day: parseFloat(editPricePerDay),
+          location_address: editLocationAddress || null,
+          images: editVehicleImages,
+        })
+        .eq("id", editingVehicle.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["owner-vehicles"] });
+      setEditVehicleOpen(false);
+      setEditingVehicle(null);
+      toast({ title: "Vehicle updated successfully!" });
+    },
+    onError: (error: Error) => {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    },
+  });
+
+  const openEditDialog = (vehicle: Vehicle) => {
+    setEditingVehicle(vehicle);
+    setEditVehicleType(vehicle.vehicle_type);
+    setEditRegNumber(vehicle.registration_number);
+    setEditBrand(vehicle.brand || "");
+    setEditModel(vehicle.model || "");
+    setEditPricePerDay(vehicle.price_per_day.toString());
+    setEditLocationAddress(vehicle.location_address || "");
+    setEditVehicleImages(vehicle.images || []);
+    setEditVehicleOpen(true);
+  };
 
   const toggleVehicle = async (id: string, isDisabled: boolean) => {
     await supabase.from("vehicles").update({ is_disabled: !isDisabled }).eq("id", id);
@@ -212,6 +278,56 @@ export default function OwnerDashboard() {
           </DialogContent>
         </Dialog>
 
+        {/* Edit Vehicle Dialog */}
+        <Dialog open={editVehicleOpen} onOpenChange={setEditVehicleOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Edit Vehicle</DialogTitle>
+            </DialogHeader>
+            <form onSubmit={(e) => { e.preventDefault(); editVehicleMutation.mutate(); }} className="space-y-4 mt-4">
+              <div>
+                <Label>Vehicle Type</Label>
+                <Select value={editVehicleType} onValueChange={setEditVehicleType}>
+                  <SelectTrigger><SelectValue placeholder="Select type" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="car">🚗 Car</SelectItem>
+                    <SelectItem value="bike">🏍️ Bike</SelectItem>
+                    <SelectItem value="auto">🛺 Auto</SelectItem>
+                    <SelectItem value="bus">🚌 Bus</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label>Registration Number</Label>
+                <Input value={editRegNumber} onChange={(e) => setEditRegNumber(e.target.value)} placeholder="ABC-1234" />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div><Label>Brand</Label><Input value={editBrand} onChange={(e) => setEditBrand(e.target.value)} placeholder="Toyota" /></div>
+                <div><Label>Model</Label><Input value={editModel} onChange={(e) => setEditModel(e.target.value)} placeholder="Camry" /></div>
+              </div>
+              <div>
+                <Label>Price per Day (₹)</Label>
+                <Input type="number" value={editPricePerDay} onChange={(e) => setEditPricePerDay(e.target.value)} placeholder="500" />
+              </div>
+              <div>
+                <Label>Location</Label>
+                <Input value={editLocationAddress} onChange={(e) => setEditLocationAddress(e.target.value)} placeholder="City, Area" />
+              </div>
+              <div>
+                <Label>Vehicle Images</Label>
+                <VehicleImageUpload 
+                  images={editVehicleImages} 
+                  onImagesChange={setEditVehicleImages}
+                  maxImages={5}
+                />
+              </div>
+              <Button type="submit" className="w-full" disabled={editVehicleMutation.isPending}>
+                {editVehicleMutation.isPending ? "Saving..." : "Save Changes"}
+              </Button>
+            </form>
+          </DialogContent>
+        </Dialog>
+
         {/* Vehicles List */}
         <section>
           <h2 className="text-lg font-bold mb-3">Your Vehicles</h2>
@@ -232,13 +348,16 @@ export default function OwnerDashboard() {
                       <div>
                         <p className="font-semibold">{vehicle.brand} {vehicle.model}</p>
                         <p className="text-sm text-muted-foreground">{vehicle.registration_number}</p>
-                        <p className="text-sm font-semibold text-primary">${vehicle.price_per_day}/day</p>
+                        <p className="text-sm font-semibold text-primary">₹{vehicle.price_per_day}/day</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
                       <span className={`px-2 py-1 rounded-full text-xs font-medium ${vehicle.is_disabled ? "bg-destructive/10 text-destructive" : vehicle.is_available ? "bg-success/10 text-success" : "bg-warning/10 text-warning"}`}>
                         {vehicle.is_disabled ? "Disabled" : vehicle.is_available ? "Available" : "Booked"}
                       </span>
+                      <Button variant="ghost" size="iconSm" onClick={() => openEditDialog(vehicle as Vehicle)}>
+                        <Pencil className="h-4 w-4" />
+                      </Button>
                       <Button variant="ghost" size="iconSm" onClick={() => toggleVehicle(vehicle.id, vehicle.is_disabled || false)}>
                         {vehicle.is_disabled ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
                       </Button>
