@@ -15,6 +15,7 @@ import OwnerProfileSheet from "./OwnerProfileSheet";
 import OwnerSettingsSheet from "./OwnerSettingsSheet";
 import ChatScreen from "@/components/chat/ChatScreen";
 import { VehicleThumbnail } from "@/components/vehicle/VehicleThumbnail";
+import LocationPicker from "./LocationPicker";
 
 interface Vehicle {
   id: string;
@@ -24,6 +25,8 @@ interface Vehicle {
   model: string | null;
   price_per_day: number;
   location_address: string | null;
+  location_lat: number | null;
+  location_lng: number | null;
   images: string[] | null;
   is_available: boolean | null;
   is_disabled: boolean | null;
@@ -52,6 +55,8 @@ export default function OwnerDashboard() {
   const [model, setModel] = useState("");
   const [pricePerDay, setPricePerDay] = useState("");
   const [locationAddress, setLocationAddress] = useState("");
+  const [locationLat, setLocationLat] = useState<number | null>(null);
+  const [locationLng, setLocationLng] = useState<number | null>(null);
   const [vehicleImages, setVehicleImages] = useState<string[]>([]);
 
   // Form state for edit
@@ -61,6 +66,8 @@ export default function OwnerDashboard() {
   const [editModel, setEditModel] = useState("");
   const [editPricePerDay, setEditPricePerDay] = useState("");
   const [editLocationAddress, setEditLocationAddress] = useState("");
+  const [editLocationLat, setEditLocationLat] = useState<number | null>(null);
+  const [editLocationLng, setEditLocationLng] = useState<number | null>(null);
   const [editVehicleImages, setEditVehicleImages] = useState<string[]>([]);
 
   const { data: vehicles = [], isLoading } = useQuery({
@@ -112,6 +119,8 @@ export default function OwnerDashboard() {
         model,
         price_per_day: parseFloat(pricePerDay),
         location_address: locationAddress || null,
+        location_lat: locationLat,
+        location_lng: locationLng,
         images: vehicleImages,
       });
       if (error) throw error;
@@ -125,6 +134,8 @@ export default function OwnerDashboard() {
       setModel("");
       setPricePerDay("");
       setLocationAddress("");
+      setLocationLat(null);
+      setLocationLng(null);
       setVehicleImages([]);
       toast({ title: "Vehicle added successfully!" });
     },
@@ -145,6 +156,8 @@ export default function OwnerDashboard() {
           model: editModel,
           price_per_day: parseFloat(editPricePerDay),
           location_address: editLocationAddress || null,
+          location_lat: editLocationLat,
+          location_lng: editLocationLng,
           images: editVehicleImages,
         })
         .eq("id", editingVehicle.id);
@@ -169,6 +182,8 @@ export default function OwnerDashboard() {
     setEditModel(vehicle.model || "");
     setEditPricePerDay(vehicle.price_per_day.toString());
     setEditLocationAddress(vehicle.location_address || "");
+    setEditLocationLat(vehicle.location_lat);
+    setEditLocationLng(vehicle.location_lng);
     setEditVehicleImages(vehicle.images || []);
     setEditVehicleOpen(true);
   };
@@ -259,10 +274,16 @@ export default function OwnerDashboard() {
                 <Label>Price per Day (₹)</Label>
                 <Input type="number" value={pricePerDay} onChange={(e) => setPricePerDay(e.target.value)} placeholder="500" />
               </div>
-              <div>
-                <Label>Location</Label>
-                <Input value={locationAddress} onChange={(e) => setLocationAddress(e.target.value)} placeholder="City, Area" />
-              </div>
+              <LocationPicker
+                address={locationAddress}
+                lat={locationLat}
+                lng={locationLng}
+                onLocationChange={(addr, lat, lng) => {
+                  setLocationAddress(addr);
+                  setLocationLat(lat);
+                  setLocationLng(lng);
+                }}
+              />
               <div>
                 <Label>Vehicle Images</Label>
                 <VehicleImageUpload 
@@ -309,10 +330,16 @@ export default function OwnerDashboard() {
                 <Label>Price per Day (₹)</Label>
                 <Input type="number" value={editPricePerDay} onChange={(e) => setEditPricePerDay(e.target.value)} placeholder="500" />
               </div>
-              <div>
-                <Label>Location</Label>
-                <Input value={editLocationAddress} onChange={(e) => setEditLocationAddress(e.target.value)} placeholder="City, Area" />
-              </div>
+              <LocationPicker
+                address={editLocationAddress}
+                lat={editLocationLat}
+                lng={editLocationLng}
+                onLocationChange={(addr, lat, lng) => {
+                  setEditLocationAddress(addr);
+                  setEditLocationLat(lat);
+                  setEditLocationLng(lng);
+                }}
+              />
               <div>
                 <Label>Vehicle Images</Label>
                 <VehicleImageUpload 
