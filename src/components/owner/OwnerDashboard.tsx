@@ -245,7 +245,7 @@ export default function OwnerDashboard() {
               <Plus className="h-5 w-5 mr-2" /> Add New Vehicle
             </Button>
           </DialogTrigger>
-          <DialogContent>
+          <DialogContent className="max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Add New Vehicle</DialogTitle>
             </DialogHeader>
@@ -292,7 +292,7 @@ export default function OwnerDashboard() {
                   maxImages={5}
                 />
               </div>
-              <Button type="submit" className="w-full" disabled={addVehicleMutation.isPending}>
+              <Button type="submit" className="w-full sticky bottom-0" disabled={addVehicleMutation.isPending}>
                 {addVehicleMutation.isPending ? "Adding..." : "Add Vehicle"}
               </Button>
             </form>
@@ -301,7 +301,7 @@ export default function OwnerDashboard() {
 
         {/* Edit Vehicle Dialog */}
         <Dialog open={editVehicleOpen} onOpenChange={setEditVehicleOpen}>
-          <DialogContent>
+          <DialogContent className="max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Edit Vehicle</DialogTitle>
             </DialogHeader>
@@ -348,7 +348,7 @@ export default function OwnerDashboard() {
                   maxImages={5}
                 />
               </div>
-              <Button type="submit" className="w-full" disabled={editVehicleMutation.isPending}>
+              <Button type="submit" className="w-full sticky bottom-0" disabled={editVehicleMutation.isPending}>
                 {editVehicleMutation.isPending ? "Saving..." : "Save Changes"}
               </Button>
             </form>
