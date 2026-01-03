@@ -1,10 +1,11 @@
-import { useState, useEffect } from "react";
+import { useState, useCallback } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { MapPin, Car, MessageCircle, Navigation, User } from "lucide-react";
+import { MapPin, Car, MessageCircle, Navigation, User, List, Map } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { VehicleThumbnail } from "@/components/vehicle/VehicleThumbnail";
+import { GoogleMap, useJsApiLoader, Marker, InfoWindow } from "@react-google-maps/api";
 
 interface Vehicle {
   id: string;
@@ -17,6 +18,7 @@ interface Vehicle {
   location_address: string | null;
   location_lat: number | null;
   location_lng: number | null;
+  distance?: number;
 }
 
 interface NearbyTabProps {
@@ -24,11 +26,27 @@ interface NearbyTabProps {
   onViewOwner: (ownerId: string) => void;
 }
 
+const mapContainerStyle = {
+  width: "100%",
+  height: "400px",
+};
+
 export default function NearbyTab({ onChatWithOwner, onViewOwner }: NearbyTabProps) {
   const [locationEnabled, setLocationEnabled] = useState(false);
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [loading, setLoading] = useState(false);
+  const [viewMode, setViewMode] = useState<"list" | "map">("list");
+  const [selectedVehicle, setSelectedVehicle] = useState<Vehicle | null>(null);
+
+  const { isLoaded } = useJsApiLoader({
+    id: "google-map-script",
+    googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY || "",
+  });
+
+  const onMapLoad = useCallback((map: google.maps.Map) => {
+    // Map loaded
+  }, []);
 
   const enableLocation = () => {
     if (!navigator.geolocation) {
@@ -57,7 +75,6 @@ export default function NearbyTab({ onChatWithOwner, onViewOwner }: NearbyTabPro
 
   const fetchNearbyVehicles = async (lat: number, lng: number) => {
     try {
-      // Fetch all available vehicles (in production, you'd use PostGIS for distance filtering)
       const { data, error } = await supabase
         .from("vehicles")
         .select("*")
@@ -68,7 +85,6 @@ export default function NearbyTab({ onChatWithOwner, onViewOwner }: NearbyTabPro
 
       if (error) throw error;
 
-      // Calculate distance and sort by nearest
       const vehiclesWithDistance = (data || []).map((vehicle) => {
         const distance = calculateDistance(
           lat,
@@ -79,7 +95,6 @@ export default function NearbyTab({ onChatWithOwner, onViewOwner }: NearbyTabPro
         return { ...vehicle, distance };
       });
 
-      // Sort by distance and take nearest 20
       vehiclesWithDistance.sort((a, b) => a.distance - b.distance);
       setVehicles(vehiclesWithDistance.slice(0, 20));
     } catch (error) {
@@ -91,7 +106,7 @@ export default function NearbyTab({ onChatWithOwner, onViewOwner }: NearbyTabPro
   };
 
   const calculateDistance = (lat1: number, lng1: number, lat2: number, lng2: number) => {
-    const R = 6371; // Radius of Earth in km
+    const R = 6371;
     const dLat = (lat2 - lat1) * (Math.PI / 180);
     const dLng = (lng2 - lng1) * (Math.PI / 180);
     const a =
@@ -124,14 +139,117 @@ export default function NearbyTab({ onChatWithOwner, onViewOwner }: NearbyTabPro
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-2 text-sm text-muted-foreground mb-4">
-        <MapPin className="h-4 w-4 text-primary" />
-        <span>Showing vehicles near your location</span>
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <MapPin className="h-4 w-4 text-primary" />
+          <span>Showing vehicles near you</span>
+        </div>
+        <div className="flex gap-1">
+          <Button
+            size="sm"
+            variant={viewMode === "list" ? "default" : "outline"}
+            onClick={() => setViewMode("list")}
+            className="gap-1"
+          >
+            <List className="h-4 w-4" />
+          </Button>
+          <Button
+            size="sm"
+            variant={viewMode === "map" ? "default" : "outline"}
+            onClick={() => setViewMode("map")}
+            className="gap-1"
+          >
+            <Map className="h-4 w-4" />
+          </Button>
+        </div>
       </div>
 
       {loading ? (
         <div className="flex justify-center py-8">
           <div className="h-8 w-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+        </div>
+      ) : viewMode === "map" && isLoaded && userLocation ? (
+        <div className="rounded-lg overflow-hidden border border-border">
+          <GoogleMap
+            mapContainerStyle={mapContainerStyle}
+            center={userLocation}
+            zoom={13}
+            onLoad={onMapLoad}
+            options={{
+              streetViewControl: false,
+              mapTypeControl: false,
+              fullscreenControl: false,
+            }}
+          >
+            {/* User location marker */}
+            <Marker
+              position={userLocation}
+              icon={{
+                path: google.maps.SymbolPath.CIRCLE,
+                scale: 10,
+                fillColor: "#3b82f6",
+                fillOpacity: 1,
+                strokeColor: "#ffffff",
+                strokeWeight: 3,
+              }}
+              title="Your Location"
+            />
+
+            {/* Vehicle markers */}
+            {vehicles.map((vehicle) => (
+              vehicle.location_lat && vehicle.location_lng && (
+                <Marker
+                  key={vehicle.id}
+                  position={{ lat: vehicle.location_lat, lng: vehicle.location_lng }}
+                  onClick={() => setSelectedVehicle(vehicle)}
+                  icon={{
+                    path: google.maps.SymbolPath.BACKWARD_CLOSED_ARROW,
+                    scale: 6,
+                    fillColor: "#ef4444",
+                    fillOpacity: 1,
+                    strokeColor: "#ffffff",
+                    strokeWeight: 2,
+                    rotation: 0,
+                  }}
+                />
+              )
+            ))}
+
+            {/* Info window for selected vehicle */}
+            {selectedVehicle && selectedVehicle.location_lat && selectedVehicle.location_lng && (
+              <InfoWindow
+                position={{ lat: selectedVehicle.location_lat, lng: selectedVehicle.location_lng }}
+                onCloseClick={() => setSelectedVehicle(null)}
+              >
+                <div className="p-2 min-w-[200px]">
+                  <h3 className="font-semibold text-foreground">
+                    {selectedVehicle.brand} {selectedVehicle.model}
+                  </h3>
+                  <p className="text-sm text-muted-foreground capitalize">{selectedVehicle.vehicle_type}</p>
+                  <p className="text-lg font-bold text-primary mt-1">₹{selectedVehicle.price_per_day}/day</p>
+                  {selectedVehicle.distance !== undefined && (
+                    <p className="text-xs text-muted-foreground">{selectedVehicle.distance.toFixed(1)} km away</p>
+                  )}
+                  <div className="flex gap-2 mt-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => onViewOwner(selectedVehicle.owner_id)}
+                    >
+                      <User className="h-3 w-3" />
+                    </Button>
+                    <Button
+                      size="sm"
+                      onClick={() => onChatWithOwner(selectedVehicle.owner_id, selectedVehicle.id)}
+                    >
+                      <MessageCircle className="h-3 w-3 mr-1" />
+                      Chat
+                    </Button>
+                  </div>
+                </div>
+              </InfoWindow>
+            )}
+          </GoogleMap>
         </div>
       ) : vehicles.length === 0 ? (
         <Card variant="glass" className="p-6 text-center">
@@ -140,7 +258,7 @@ export default function NearbyTab({ onChatWithOwner, onViewOwner }: NearbyTabPro
         </Card>
       ) : (
         <div className="grid gap-4">
-          {vehicles.map((vehicle: Vehicle & { distance?: number }) => (
+          {vehicles.map((vehicle) => (
             <Card key={vehicle.id} variant="interactive" className="overflow-hidden">
               <div className="flex">
                 <div className="w-32 h-32 bg-muted flex items-center justify-center flex-shrink-0 overflow-hidden">
@@ -155,7 +273,7 @@ export default function NearbyTab({ onChatWithOwner, onViewOwner }: NearbyTabPro
                     {vehicle.brand} {vehicle.model}
                   </h3>
                   <p className="text-sm text-muted-foreground capitalize">{vehicle.vehicle_type}</p>
-                  {'distance' in vehicle && vehicle.distance !== undefined && (
+                  {vehicle.distance !== undefined && (
                     <p className="text-xs text-primary mt-1">
                       {vehicle.distance.toFixed(1)} km away
                     </p>
