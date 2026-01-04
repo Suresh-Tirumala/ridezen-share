@@ -109,15 +109,32 @@ export default function OwnerDashboard() {
     refetchInterval: 30000,
   });
 
+  const validatePrice = (priceStr: string): number => {
+    const price = parseFloat(priceStr);
+    if (isNaN(price)) {
+      throw new Error("Invalid price: Please enter a valid number");
+    }
+    if (price <= 0) {
+      throw new Error("Invalid price: Price must be greater than 0");
+    }
+    if (price > 1000000) {
+      throw new Error("Invalid price: Price cannot exceed ₹10,00,000");
+    }
+    // Round to 2 decimal places to prevent precision issues
+    return Math.round(price * 100) / 100;
+  };
+
   const addVehicleMutation = useMutation({
     mutationFn: async () => {
+      const validatedPrice = validatePrice(pricePerDay);
+      
       const { error } = await supabase.from("vehicles").insert({
         owner_id: user?.id,
         vehicle_type: vehicleType as "car" | "bike" | "auto" | "bus",
         registration_number: regNumber,
         brand,
         model,
-        price_per_day: parseFloat(pricePerDay),
+        price_per_day: validatedPrice,
         location_address: locationAddress || null,
         location_lat: locationLat,
         location_lng: locationLng,
@@ -147,6 +164,8 @@ export default function OwnerDashboard() {
   const editVehicleMutation = useMutation({
     mutationFn: async () => {
       if (!editingVehicle) return;
+      const validatedPrice = validatePrice(editPricePerDay);
+      
       const { error } = await supabase
         .from("vehicles")
         .update({
@@ -154,7 +173,7 @@ export default function OwnerDashboard() {
           registration_number: editRegNumber,
           brand: editBrand,
           model: editModel,
-          price_per_day: parseFloat(editPricePerDay),
+          price_per_day: validatedPrice,
           location_address: editLocationAddress || null,
           location_lat: editLocationLat,
           location_lng: editLocationLng,
