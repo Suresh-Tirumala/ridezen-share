@@ -264,16 +264,14 @@ export default function OwnerProfileSheet({
               </div>
 
               {/* Track My Vehicles Button */}
-              {rentedVehicles.length > 0 && (
-                <Button
-                  variant="outline"
-                  className="w-full mt-3 gap-2"
-                  onClick={() => setTrackingSheetOpen(true)}
-                >
-                  <Navigation className="h-4 w-4" />
-                  Track My Vehicles ({rentedVehicles.length})
-                </Button>
-              )}
+              <Button
+                variant="outline"
+                className="w-full mt-3 gap-2"
+                onClick={() => setTrackingSheetOpen(true)}
+              >
+                <Navigation className="h-4 w-4" />
+                Track My Vehicles {rentedVehicles.length > 0 && `(${rentedVehicles.length})`}
+              </Button>
             </Card>
 
             {/* My Vehicles */}
