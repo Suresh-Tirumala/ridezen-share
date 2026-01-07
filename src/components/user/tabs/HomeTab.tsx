@@ -15,11 +15,6 @@ const vehicleCategories: { id: VehicleType; label: string; icon: typeof Car; col
   { id: "auto", label: "Autos", icon: Bus, color: "text-success" },
 ];
 
-const tourismPackages = [
-  { id: 1, title: "Hill Station Adventure", duration: "3 Days", price: 299.99, image: "🏔️" },
-  { id: 2, title: "City Tour Express", duration: "1 Day", price: 49.99, image: "🏙️" },
-  { id: 3, title: "Coastal Highway Trip", duration: "2 Days", price: 199.99, image: "🏖️" },
-];
 
 interface Vehicle {
   id: string;
@@ -118,24 +113,6 @@ export default function HomeTab({ onChatWithOwner, onViewOwner }: HomeTabProps) 
         </div>
       </section>
 
-      {/* Tourism Packages */}
-      <section>
-        <h2 className="text-lg font-bold mb-3">Tourism Packages</h2>
-        <div className="flex gap-4 overflow-x-auto pb-2 -mx-4 px-4">
-          {tourismPackages.map((pkg) => (
-            <Card key={pkg.id} variant="interactive" className="min-w-[200px] flex-shrink-0">
-              <CardHeader className="pb-2">
-                <div className="text-4xl mb-2">{pkg.image}</div>
-                <CardTitle className="text-base">{pkg.title}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground">{pkg.duration}</p>
-                <p className="text-lg font-bold text-primary">${pkg.price}</p>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      </section>
 
       {/* Vehicles to Rent */}
       <section>
