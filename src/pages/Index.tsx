@@ -30,9 +30,10 @@ const Index = () => {
     return null;
   }
 
-  // Only show OwnerDashboard if user actually has owner role in database
-  // This prevents RLS errors when users try to perform owner actions
+  // Owners can optionally view the app as a customer (UI only) via viewMode.
+  // Permissions are still enforced by the actual database role.
   if (role === "owner") {
+    if (viewMode === "user") return <UserHome />;
     return <OwnerDashboard />;
   }
 
