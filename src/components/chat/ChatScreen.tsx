@@ -149,19 +149,42 @@ export default function ChatScreen({ conversationId, isOpen, onClose }: ChatScre
 
   const sendMessage = async () => {
     if (!newMessage.trim() || !conversationId || !user) return;
+    
+    const messageContent = newMessage.trim();
+    const tempId = `temp-${Date.now()}`;
+    
+    // Optimistic update - show message immediately
+    const optimisticMessage: Message = {
+      id: tempId,
+      content: messageContent,
+      sender_id: user.id,
+      created_at: new Date().toISOString(),
+      is_read: false,
+    };
+    
+    setMessages((prev) => [...prev, optimisticMessage]);
+    setNewMessage("");
     setSending(true);
 
     try {
-      const { error } = await supabase.from("messages").insert({
+      const { data, error } = await supabase.from("messages").insert({
         conversation_id: conversationId,
         sender_id: user.id,
-        content: newMessage.trim(),
-      });
+        content: messageContent,
+      }).select().single();
 
       if (error) throw error;
-      setNewMessage("");
+      
+      // Replace optimistic message with real one
+      if (data) {
+        setMessages((prev) => 
+          prev.map((m) => m.id === tempId ? data : m)
+        );
+      }
     } catch (error) {
       console.error("Error sending message:", error);
+      // Remove optimistic message on error
+      setMessages((prev) => prev.filter((m) => m.id !== tempId));
       toast.error("Failed to send message");
     } finally {
       setSending(false);
