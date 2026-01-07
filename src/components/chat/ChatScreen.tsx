@@ -2,10 +2,20 @@ import { useState, useEffect, useRef } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ArrowLeft, Send, User, Car } from "lucide-react";
+import { ArrowLeft, Send, User, Car, Trash2, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface Message {
   id: string;
@@ -29,6 +39,8 @@ export default function ChatScreen({ conversationId, isOpen, onClose }: ChatScre
   const [sending, setSending] = useState(false);
   const [otherUser, setOtherUser] = useState<{ name: string; avatar: string | null } | null>(null);
   const [vehicle, setVehicle] = useState<{ brand: string; model: string } | null>(null);
+  const [selectedMessage, setSelectedMessage] = useState<Message | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -198,6 +210,44 @@ export default function ChatScreen({ conversationId, isOpen, onClose }: ChatScre
     }
   };
 
+  const handleDeleteMessage = async () => {
+    if (!selectedMessage || !user) return;
+    
+    // Only allow deleting own messages
+    if (selectedMessage.sender_id !== user.id) {
+      toast.error("You can only delete your own messages");
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from("messages")
+        .delete()
+        .eq("id", selectedMessage.id)
+        .eq("sender_id", user.id);
+
+      if (error) throw error;
+
+      // Remove from local state
+      setMessages((prev) => prev.filter((m) => m.id !== selectedMessage.id));
+      toast.success("Message deleted");
+    } catch (error) {
+      console.error("Error deleting message:", error);
+      toast.error("Failed to delete message");
+    } finally {
+      setSelectedMessage(null);
+      setDeleteDialogOpen(false);
+    }
+  };
+
+  const handleMessageClick = (message: Message) => {
+    // Only show delete option for own messages
+    if (message.sender_id === user?.id && !message.id.startsWith("temp-")) {
+      setSelectedMessage(message);
+      setDeleteDialogOpen(true);
+    }
+  };
+
   const formatTime = (dateString: string) => {
     return new Date(dateString).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
   };
@@ -248,7 +298,8 @@ export default function ChatScreen({ conversationId, isOpen, onClose }: ChatScre
                   className={`flex ${isOwn ? "justify-end" : "justify-start"}`}
                 >
                   <div
-                    className={`max-w-[75%] rounded-2xl px-4 py-2 ${
+                    onClick={() => handleMessageClick(message)}
+                    className={`max-w-[75%] rounded-2xl px-4 py-2 cursor-pointer transition-opacity hover:opacity-90 ${
                       isOwn
                         ? "bg-primary text-primary-foreground rounded-br-sm"
                         : "bg-muted rounded-bl-sm"
@@ -290,6 +341,30 @@ export default function ChatScreen({ conversationId, isOpen, onClose }: ChatScre
             </Button>
           </div>
         </div>
+
+        {/* Delete Confirmation Dialog */}
+        <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete Message</AlertDialogTitle>
+              <AlertDialogDescription>
+                Are you sure you want to delete this message? This action cannot be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel onClick={() => setSelectedMessage(null)}>
+                Cancel
+              </AlertDialogCancel>
+              <AlertDialogAction
+                onClick={handleDeleteMessage}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                <Trash2 className="h-4 w-4 mr-2" />
+                Delete
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </SheetContent>
     </Sheet>
   );
