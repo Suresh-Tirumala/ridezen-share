@@ -12,10 +12,12 @@ import {
   TrendingUp,
   Calendar,
   LogOut,
-  Edit2
+  Edit2,
+  Navigation
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import VehicleTrackingSheet from "./VehicleTrackingSheet";
 
 interface Vehicle {
   id: string;
@@ -67,6 +69,7 @@ export default function OwnerProfileSheet({
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [loading, setLoading] = useState(true);
   const [totalEarnings, setTotalEarnings] = useState(0);
+  const [trackingSheetOpen, setTrackingSheetOpen] = useState(false);
 
   useEffect(() => {
     if (isOpen && user) {
@@ -259,6 +262,18 @@ export default function OwnerProfileSheet({
                   <span className="font-semibold text-muted-foreground">{disabledVehicles.length}</span>
                 </div>
               </div>
+
+              {/* Track My Vehicles Button */}
+              {rentedVehicles.length > 0 && (
+                <Button
+                  variant="outline"
+                  className="w-full mt-3 gap-2"
+                  onClick={() => setTrackingSheetOpen(true)}
+                >
+                  <Navigation className="h-4 w-4" />
+                  Track My Vehicles ({rentedVehicles.length})
+                </Button>
+              )}
             </Card>
 
             {/* My Vehicles */}
@@ -378,6 +393,12 @@ export default function OwnerProfileSheet({
             </Button>
           </div>
         )}
+
+        {/* Vehicle Tracking Sheet */}
+        <VehicleTrackingSheet
+          isOpen={trackingSheetOpen}
+          onClose={() => setTrackingSheetOpen(false)}
+        />
       </SheetContent>
     </Sheet>
   );
