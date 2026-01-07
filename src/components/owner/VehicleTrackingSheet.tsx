@@ -1,12 +1,11 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { MapPin, Navigation, Car, RefreshCw } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import mapboxgl from "mapbox-gl";
-import "mapbox-gl/dist/mapbox-gl.css";
+import { GoogleMap, useJsApiLoader, Marker, InfoWindow } from "@react-google-maps/api";
 
 interface RentedVehicle {
   id: string;
@@ -26,36 +25,34 @@ interface VehicleTrackingSheetProps {
   onClose: () => void;
 }
 
-const MAPBOX_TOKEN = import.meta.env.VITE_GOOGLE_MAPS_API_KEY; // We'll use existing token or need Mapbox
+const mapContainerStyle = {
+  width: "100%",
+  height: "250px",
+};
+
+const defaultCenter = {
+  lat: 17.385,
+  lng: 78.4867,
+};
 
 export default function VehicleTrackingSheet({ isOpen, onClose }: VehicleTrackingSheetProps) {
   const { user } = useAuth();
-  const mapContainer = useRef<HTMLDivElement>(null);
-  const map = useRef<mapboxgl.Map | null>(null);
-  const markersRef = useRef<mapboxgl.Marker[]>([]);
   const [rentedVehicles, setRentedVehicles] = useState<RentedVehicle[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedVehicle, setSelectedVehicle] = useState<RentedVehicle | null>(null);
-  const [mapboxToken, setMapboxToken] = useState<string>("");
-  const [tokenInput, setTokenInput] = useState("");
+  const [mapCenter, setMapCenter] = useState(defaultCenter);
+  const [map, setMap] = useState<google.maps.Map | null>(null);
 
-  useEffect(() => {
-    // Check for Mapbox token
-    const token = import.meta.env.VITE_MAPBOX_TOKEN || localStorage.getItem("mapbox_token") || "";
-    setMapboxToken(token);
-  }, []);
+  const { isLoaded } = useJsApiLoader({
+    id: "google-map-script",
+    googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY || "",
+  });
 
   useEffect(() => {
     if (isOpen && user) {
       fetchRentedVehicles();
     }
   }, [isOpen, user]);
-
-  useEffect(() => {
-    if (isOpen && mapboxToken && rentedVehicles.length > 0 && mapContainer.current && !map.current) {
-      initializeMap();
-    }
-  }, [isOpen, mapboxToken, rentedVehicles]);
 
   const fetchRentedVehicles = async () => {
     if (!user) return;
@@ -109,71 +106,19 @@ export default function VehicleTrackingSheet({ isOpen, onClose }: VehicleTrackin
       );
 
       setRentedVehicles(rentedVehiclesWithDetails);
+
+      // Set map center to first vehicle with location
+      const firstWithLocation = rentedVehiclesWithDetails.find(v => v.location_lat && v.location_lng);
+      if (firstWithLocation) {
+        setMapCenter({
+          lat: firstWithLocation.location_lat!,
+          lng: firstWithLocation.location_lng!,
+        });
+      }
     } catch (error) {
       console.error("Error fetching rented vehicles:", error);
     } finally {
       setLoading(false);
-    }
-  };
-
-  const initializeMap = () => {
-    if (!mapContainer.current || !mapboxToken) return;
-
-    mapboxgl.accessToken = mapboxToken;
-
-    const vehiclesWithLocation = rentedVehicles.filter(v => v.location_lat && v.location_lng);
-    
-    if (vehiclesWithLocation.length === 0) return;
-
-    const center: [number, number] = [
-      vehiclesWithLocation[0].location_lng!,
-      vehiclesWithLocation[0].location_lat!,
-    ];
-
-    map.current = new mapboxgl.Map({
-      container: mapContainer.current,
-      style: "mapbox://styles/mapbox/streets-v12",
-      center,
-      zoom: 12,
-    });
-
-    map.current.addControl(new mapboxgl.NavigationControl(), "top-right");
-
-    // Add markers for each vehicle
-    vehiclesWithLocation.forEach((vehicle) => {
-      const el = document.createElement("div");
-      el.className = "vehicle-marker";
-      el.innerHTML = getVehicleEmoji(vehicle.vehicle_type);
-      el.style.fontSize = "24px";
-      el.style.cursor = "pointer";
-      el.style.background = "white";
-      el.style.borderRadius = "50%";
-      el.style.padding = "8px";
-      el.style.boxShadow = "0 2px 8px rgba(0,0,0,0.2)";
-
-      const marker = new mapboxgl.Marker(el)
-        .setLngLat([vehicle.location_lng!, vehicle.location_lat!])
-        .setPopup(
-          new mapboxgl.Popup({ offset: 25 }).setHTML(`
-            <div style="padding: 8px;">
-              <strong>${vehicle.brand || ""} ${vehicle.model || ""}</strong>
-              <p style="margin: 4px 0; font-size: 12px; color: #666;">${vehicle.registration_number}</p>
-              <p style="margin: 4px 0; font-size: 12px;">Rented by: ${vehicle.renter_name}</p>
-            </div>
-          `)
-        )
-        .addTo(map.current!);
-
-      markersRef.current.push(marker);
-    });
-
-    // Fit bounds to show all vehicles
-    if (vehiclesWithLocation.length > 1) {
-      const bounds = new mapboxgl.LngLatBounds();
-      vehiclesWithLocation.forEach((v) => {
-        bounds.extend([v.location_lng!, v.location_lat!]);
-      });
-      map.current.fitBounds(bounds, { padding: 50 });
     }
   };
 
@@ -188,56 +133,31 @@ export default function VehicleTrackingSheet({ isOpen, onClose }: VehicleTrackin
   };
 
   const focusOnVehicle = (vehicle: RentedVehicle) => {
-    if (map.current && vehicle.location_lat && vehicle.location_lng) {
-      map.current.flyTo({
-        center: [vehicle.location_lng, vehicle.location_lat],
-        zoom: 15,
-        duration: 1000,
-      });
+    if (vehicle.location_lat && vehicle.location_lng) {
+      const newCenter = { lat: vehicle.location_lat, lng: vehicle.location_lng };
+      setMapCenter(newCenter);
       setSelectedVehicle(vehicle);
-    }
-  };
-
-  const handleTokenSubmit = () => {
-    if (tokenInput.trim()) {
-      localStorage.setItem("mapbox_token", tokenInput.trim());
-      setMapboxToken(tokenInput.trim());
+      if (map) {
+        map.panTo(newCenter);
+        map.setZoom(15);
+      }
     }
   };
 
   const handleRefresh = () => {
-    // Clear existing map and markers
-    markersRef.current.forEach(m => m.remove());
-    markersRef.current = [];
-    if (map.current) {
-      map.current.remove();
-      map.current = null;
-    }
+    setSelectedVehicle(null);
     fetchRentedVehicles();
   };
 
-  // Cleanup on unmount
-  useEffect(() => {
-    return () => {
-      markersRef.current.forEach(m => m.remove());
-      if (map.current) {
-        map.current.remove();
-        map.current = null;
-      }
-    };
+  const onLoad = useCallback((map: google.maps.Map) => {
+    setMap(map);
   }, []);
 
-  // Reset map when sheet closes
-  useEffect(() => {
-    if (!isOpen) {
-      markersRef.current.forEach(m => m.remove());
-      markersRef.current = [];
-      if (map.current) {
-        map.current.remove();
-        map.current = null;
-      }
-    }
-  }, [isOpen]);
+  const onUnmount = useCallback(() => {
+    setMap(null);
+  }, []);
+
+  const vehiclesWithLocation = rentedVehicles.filter(v => v.location_lat && v.location_lng);
 
   return (
     <Sheet open={isOpen} onOpenChange={onClose}>
@@ -258,28 +178,6 @@ export default function VehicleTrackingSheet({ isOpen, onClose }: VehicleTrackin
           <div className="flex items-center justify-center py-12">
             <div className="h-8 w-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
           </div>
-        ) : !mapboxToken ? (
-          <Card className="p-4">
-            <h4 className="font-semibold mb-2">Mapbox Token Required</h4>
-            <p className="text-sm text-muted-foreground mb-3">
-              Enter your Mapbox public token to enable vehicle tracking. Get one at{" "}
-              <a href="https://mapbox.com" target="_blank" rel="noopener noreferrer" className="text-primary underline">
-                mapbox.com
-              </a>
-            </p>
-            <div className="flex gap-2">
-              <input
-                type="text"
-                value={tokenInput}
-                onChange={(e) => setTokenInput(e.target.value)}
-                placeholder="pk.eyJ..."
-                className="flex-1 px-3 py-2 border rounded-md text-sm"
-              />
-              <Button onClick={handleTokenSubmit} size="sm">
-                Save
-              </Button>
-            </div>
-          </Card>
         ) : rentedVehicles.length === 0 ? (
           <Card className="p-8 text-center">
             <Car className="h-12 w-12 mx-auto text-muted-foreground mb-3" />
@@ -292,7 +190,51 @@ export default function VehicleTrackingSheet({ isOpen, onClose }: VehicleTrackin
           <div className="space-y-4">
             {/* Map */}
             <Card className="overflow-hidden">
-              <div ref={mapContainer} className="h-64 w-full" />
+              {isLoaded ? (
+                <GoogleMap
+                  mapContainerStyle={mapContainerStyle}
+                  center={mapCenter}
+                  zoom={12}
+                  onLoad={onLoad}
+                  onUnmount={onUnmount}
+                  options={{
+                    streetViewControl: false,
+                    mapTypeControl: false,
+                    fullscreenControl: false,
+                  }}
+                >
+                  {vehiclesWithLocation.map((vehicle) => (
+                    <Marker
+                      key={vehicle.id}
+                      position={{ lat: vehicle.location_lat!, lng: vehicle.location_lng! }}
+                      onClick={() => setSelectedVehicle(vehicle)}
+                      label={{
+                        text: getVehicleEmoji(vehicle.vehicle_type),
+                        fontSize: "20px",
+                      }}
+                    />
+                  ))}
+
+                  {selectedVehicle && selectedVehicle.location_lat && selectedVehicle.location_lng && (
+                    <InfoWindow
+                      position={{ lat: selectedVehicle.location_lat, lng: selectedVehicle.location_lng }}
+                      onCloseClick={() => setSelectedVehicle(null)}
+                    >
+                      <div className="p-1">
+                        <p className="font-semibold text-sm">
+                          {selectedVehicle.brand} {selectedVehicle.model}
+                        </p>
+                        <p className="text-xs text-gray-600">{selectedVehicle.registration_number}</p>
+                        <p className="text-xs mt-1">Rented by: {selectedVehicle.renter_name}</p>
+                      </div>
+                    </InfoWindow>
+                  )}
+                </GoogleMap>
+              ) : (
+                <div className="h-64 flex items-center justify-center bg-muted">
+                  <div className="h-6 w-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                </div>
+              )}
             </Card>
 
             {/* Vehicle List */}
