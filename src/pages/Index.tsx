@@ -29,10 +29,9 @@ const Index = () => {
     return null;
   }
 
-  // Use viewMode if set, otherwise fall back to actual role
-  const activeView = viewMode || role;
-
-  if (activeView === "owner") {
+  // Only show OwnerDashboard if user actually has owner role in database
+  // This prevents RLS errors when users try to perform owner actions
+  if (role === "owner") {
     return <OwnerDashboard />;
   }
 
