@@ -14,7 +14,8 @@ const Index = () => {
     }
   }, [user, loading, navigate]);
 
-  if (loading) {
+  // Show loading while auth is being determined OR while role is being fetched for logged-in user
+  if (loading || (user && role === null)) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
         <div className="flex flex-col items-center gap-4">
