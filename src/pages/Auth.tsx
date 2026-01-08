@@ -51,6 +51,7 @@ export default function Auth() {
           toast({
             title: "Welcome back!",
             description: `You have successfully logged in as ${selectedRole === "owner" ? "Owner" : "Customer"}.`,
+            duration: 3000,
           });
           setShowSplash(true);
         }
@@ -93,6 +94,7 @@ export default function Auth() {
           toast({
             title: "Account Created!",
             description: "Welcome to RideRent! You're now logged in.",
+            duration: 3000,
           });
           setShowSplash(true);
         }
