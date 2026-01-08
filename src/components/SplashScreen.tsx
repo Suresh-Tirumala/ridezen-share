@@ -37,8 +37,12 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
         autoPlay
         playsInline
         muted
+        controls={false}
+        disablePictureInPicture
+        controlsList="nodownload nofullscreen noremoteplayback noplaybackrate"
+        onContextMenu={(e) => e.preventDefault()}
         onEnded={handleVideoEnd}
-        className="w-auto h-auto max-w-[90vw] max-h-[70vh] object-contain md:max-w-[60vw] md:max-h-[60vh] lg:max-w-[50vw] lg:max-h-[50vh]"
+        className="w-auto h-auto max-w-[90vw] max-h-[80vh] object-contain md:max-w-[75vw] md:max-h-[75vh] lg:max-w-[70vw] lg:max-h-[70vh] pointer-events-none"
       />
     </div>
   )
