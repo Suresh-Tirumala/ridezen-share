@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { useToast } from "@/hooks/use-toast";
 import { Car, User, ArrowRight, Mail, Lock, UserCircle } from "lucide-react";
 import { z } from "zod";
+import SplashScreen from "@/components/SplashScreen";
 
 const signUpSchema = z.object({
   fullName: z.string().min(2, "Name must be at least 2 characters"),
@@ -26,6 +27,7 @@ export default function Auth() {
   const [selectedRole, setSelectedRole] = useState<AppRole>("user");
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [showSplash, setShowSplash] = useState(false);
 
   const { signIn, signUp } = useAuth();
   const navigate = useNavigate();
@@ -50,7 +52,7 @@ export default function Auth() {
             title: "Welcome back!",
             description: `You have successfully logged in as ${selectedRole === "owner" ? "Owner" : "Customer"}.`,
           });
-          navigate("/");
+          setShowSplash(true);
         }
       } else {
         const validation = signUpSchema.safeParse({
@@ -92,7 +94,7 @@ export default function Auth() {
             title: "Account Created!",
             description: "Welcome to RideRent! You're now logged in.",
           });
-          navigate("/");
+          setShowSplash(true);
         }
       }
     } catch (err) {
@@ -106,6 +108,10 @@ export default function Auth() {
       setLoading(false);
     }
   };
+
+  if (showSplash) {
+    return <SplashScreen onComplete={() => navigate("/")} />;
+  }
 
   return (
     <div className="min-h-screen bg-gradient-hero flex items-center justify-center p-4">
