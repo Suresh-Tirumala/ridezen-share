@@ -938,6 +938,33 @@ const buttonVariants = cva(
 }
 ```
 
+### 13.5 Theme Behavior
+
+| Page/Interface | Theme Support | Notes |
+|----------------|---------------|-------|
+| **Auth Page** (Login/Signup) | Light only | Locked to light theme for brand consistency |
+| **Customer Dashboard** | Light + Dark | Respects user theme preference |
+| **Owner Dashboard** | Light + Dark | Respects user theme preference |
+
+The auth page forces light theme regardless of user preference. When navigating away from auth, the previous theme is restored.
+
+### 13.6 Splash Screen
+
+A responsive animated splash screen (`RideRentLOGO_Animated.mp4`) plays upon successful login or signup:
+
+| Device | Sizing | Behavior |
+|--------|--------|----------|
+| Mobile | `max-w-[90vw] max-h-[80vh]` | Centered, contained |
+| Tablet | `max-w-[75vw] max-h-[75vh]` | Responsive scaling |
+| Desktop/Laptop | `max-w-[70vw] max-h-[70vh]` | Large display with object-cover |
+
+**Video Controls:**
+- Native controls disabled (`controls={false}`)
+- Picture-in-Picture disabled (`disablePictureInPicture`)
+- Context menu disabled (no right-click options)
+- Pointer events disabled (no interaction)
+- `controlsList="nodownload nofullscreen noremoteplayback noplaybackrate"`
+
 ---
 
 ## 14. Environment Configuration
