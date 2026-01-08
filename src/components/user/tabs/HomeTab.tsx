@@ -99,6 +99,8 @@ export default function HomeTab({ onChatWithOwner, onViewOwner }: HomeTabProps) 
           loop
           muted
           playsInline
+          disablePictureInPicture
+          controlsList="nodownload nofullscreen noremoteplayback"
           className="w-full h-40 sm:h-48 md:h-52 lg:h-60 object-cover rounded-xl shadow-lg"
         />
       </section>
