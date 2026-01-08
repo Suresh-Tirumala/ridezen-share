@@ -37,14 +37,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const { data, error } = await supabase
       .from("user_roles")
       .select("role")
-      .eq("user_id", userId)
-      .single();
+      .eq("user_id", userId);
 
     if (error) {
       console.error("Error fetching user role:", error);
       return null;
     }
-    return data?.role as AppRole;
+
+    const roles = (data ?? []).map((r) => r.role as AppRole);
+    if (roles.includes("owner")) return "owner";
+    if (roles.includes("user")) return "user";
+    return null;
   };
 
   const fetchProfile = async (userId: string) => {
@@ -62,42 +65,51 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        setSession(session);
-        setUser(session?.user ?? null);
+    let mounted = true;
 
-        if (session?.user) {
-          // Defer Supabase calls with setTimeout to prevent deadlock
-          setTimeout(async () => {
-            const userRole = await fetchUserRole(session.user.id);
-            setRole(userRole);
-            const userProfile = await fetchProfile(session.user.id);
-            setProfile(userProfile);
-            setLoading(false);
-          }, 0);
-        } else {
-          setRole(null);
-          setProfile(null);
-          setLoading(false);
-        }
+    const hydrateFromSession = async (nextSession: Session | null) => {
+      if (!mounted) return;
+
+      setLoading(true);
+      setSession(nextSession);
+      setUser(nextSession?.user ?? null);
+      setRole(null);
+      setProfile(null);
+
+      if (!nextSession?.user) {
+        setLoading(false);
+        return;
       }
-    );
 
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
+      const userId = nextSession.user.id;
+      const [userRole, userProfile] = await Promise.all([
+        fetchUserRole(userId),
+        fetchProfile(userId),
+      ]);
 
-      if (session?.user) {
-        const userRole = await fetchUserRole(session.user.id);
-        setRole(userRole);
-        const userProfile = await fetchProfile(session.user.id);
-        setProfile(userProfile);
-      }
+      if (!mounted) return;
+      setRole(userRole);
+      setProfile(userProfile);
       setLoading(false);
+    };
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+      // Defer backend calls to avoid potential auth callback deadlocks
+      setTimeout(() => {
+        void hydrateFromSession(nextSession);
+      }, 0);
     });
 
-    return () => subscription.unsubscribe();
+    supabase.auth.getSession().then(({ data: { session: initialSession } }) => {
+      void hydrateFromSession(initialSession);
+    });
+
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
   const signUp = async (email: string, password: string, fullName: string, role: AppRole) => {

@@ -5,7 +5,7 @@ import UserHome from "@/components/user/UserHome";
 import OwnerDashboard from "@/components/owner/OwnerDashboard";
 
 const Index = () => {
-  const { user, role, viewMode, loading } = useAuth();
+  const { user, role, loading } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -30,10 +30,8 @@ const Index = () => {
     return null;
   }
 
-  // Owners can optionally view the app as a customer (UI only) via viewMode.
-  // Permissions are still enforced by the actual database role.
+  // Route strictly by the user's actual database role.
   if (role === "owner") {
-    if (viewMode === "user") return <UserHome />;
     return <OwnerDashboard />;
   }
 
