@@ -38,7 +38,7 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
         playsInline
         muted
         onEnded={handleVideoEnd}
-        className="w-auto h-auto max-w-[90vw] max-h-[70vh] object-contain md:w-full md:h-full md:max-w-none md:max-h-none md:object-cover"
+        className="w-auto h-auto max-w-[90vw] max-h-[70vh] object-contain md:max-w-[60vw] md:max-h-[60vh] lg:max-w-[50vw] lg:max-h-[50vh]"
       />
     </div>
   )
