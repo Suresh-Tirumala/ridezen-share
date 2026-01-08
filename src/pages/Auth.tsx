@@ -127,9 +127,7 @@ export default function Auth() {
               <img src={rideRentLogo} alt="RideRent" className="h-32 w-auto object-contain" />
             </div>
             <CardDescription className="text-muted-foreground">
-              {isLogin
-                ? "Sign in to access your account"
-                : "Join RideRent and start your journey"}
+              Freedom to Ride.
             </CardDescription>
           </CardHeader>
 
