@@ -121,7 +121,9 @@ export default function Auth() {
       <div className="w-full max-w-md animate-fade-in">
         {/* Logo */}
         <Link to="/" className="flex items-center justify-center mb-8">
-          <img src={RideRentLogo} alt="RideRent" className="h-20 w-auto" />
+          <div className="p-4 rounded-2xl bg-card shadow-lg">
+            <img src={RideRentLogo} alt="RideRent" className="h-24 w-auto" />
+          </div>
         </Link>
 
         <Card variant="elevated" className="backdrop-blur-sm">
