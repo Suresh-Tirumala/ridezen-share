@@ -37,7 +37,7 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
         autoPlay
         playsInline
         onEnded={handleVideoEnd}
-        className="w-auto h-auto max-w-[90vw] max-h-[80vh] object-contain md:max-w-[80vw] md:max-h-[90vh]"
+        className="w-auto h-auto max-w-[90vw] max-h-[70vh] object-contain md:max-w-[95vw] md:max-h-[95vh]"
       />
     </div>
   );
