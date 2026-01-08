@@ -99,7 +99,7 @@ export default function HomeTab({ onChatWithOwner, onViewOwner }: HomeTabProps) 
           loop
           muted
           playsInline
-          className="w-full h-60 object-cover rounded-xl shadow-lg"
+          className="w-full h-48 sm:h-56 md:h-60 lg:h-72 object-cover rounded-xl shadow-lg"
         />
       </section>
 
