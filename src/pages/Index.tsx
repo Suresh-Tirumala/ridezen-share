@@ -5,7 +5,7 @@ import UserHome from "@/components/user/UserHome";
 import OwnerDashboard from "@/components/owner/OwnerDashboard";
 
 const Index = () => {
-  const { user, role, loading } = useAuth();
+  const { user, role, viewMode, loading } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -30,8 +30,11 @@ const Index = () => {
     return null;
   }
 
-  // Route strictly by the user's actual database role.
+  // Owners can view as customer if they selected "Customer" at login (viewMode === "user").
+  // If user's actual role is "owner" but viewMode is "user", show UserHome (UI only).
+  // Permissions are still enforced by the actual database role.
   if (role === "owner") {
+    if (viewMode === "user") return <UserHome />;
     return <OwnerDashboard />;
   }
 
