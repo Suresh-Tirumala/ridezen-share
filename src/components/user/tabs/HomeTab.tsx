@@ -100,8 +100,10 @@ export default function HomeTab({ onChatWithOwner, onViewOwner }: HomeTabProps) 
           muted
           playsInline
           disablePictureInPicture
-          controlsList="nodownload nofullscreen noremoteplayback"
-          className="w-full h-40 sm:h-48 md:h-52 lg:h-60 object-cover rounded-xl shadow-lg"
+          controls={false}
+          controlsList="nodownload nofullscreen noremoteplayback noplaybackrate"
+          onContextMenu={(e) => e.preventDefault()}
+          className="w-full h-40 sm:h-48 md:h-52 lg:h-60 object-cover rounded-xl shadow-lg pointer-events-none"
         />
       </section>
 
