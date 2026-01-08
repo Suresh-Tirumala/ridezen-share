@@ -4,7 +4,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
 import { 
   User, 
   Phone, 
@@ -18,13 +17,12 @@ import {
   IndianRupee,
   LogOut,
   History,
-  Moon,
-  Sun
+  Settings
 } from "lucide-react";
 import { VehicleThumbnail } from "@/components/vehicle/VehicleThumbnail";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { useTheme } from "next-themes";
+import CustomerSettingsSheet from "@/components/user/CustomerSettingsSheet";
 
 interface Booking {
   id: string;
@@ -53,8 +51,8 @@ interface VehicleHistory {
 
 export default function ProfileTab() {
   const { user, profile, signOut, updateProfile } = useAuth();
-  const { theme, setTheme } = useTheme();
   const [isEditing, setIsEditing] = useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [editData, setEditData] = useState({
     full_name: profile?.full_name || "",
     phone: profile?.phone || "",
@@ -416,23 +414,19 @@ export default function ProfileTab() {
         </CardContent>
       </Card>
 
-      {/* Dark Mode Toggle */}
+      {/* Settings */}
       <Card>
         <CardContent className="py-4">
-          <div className="flex items-center justify-between">
+          <button 
+            onClick={() => setIsSettingsOpen(true)}
+            className="w-full flex items-center justify-between"
+          >
             <div className="flex items-center gap-3">
-              {theme === "dark" ? (
-                <Moon className="h-5 w-5 text-muted-foreground" />
-              ) : (
-                <Sun className="h-5 w-5 text-muted-foreground" />
-              )}
-              <span className="font-medium">Dark Mode</span>
+              <Settings className="h-5 w-5 text-muted-foreground" />
+              <span className="font-medium">Settings</span>
             </div>
-            <Switch 
-              checked={theme === "dark"}
-              onCheckedChange={(checked) => setTheme(checked ? "dark" : "light")}
-            />
-          </div>
+            <span className="text-muted-foreground">→</span>
+          </button>
         </CardContent>
       </Card>
 
@@ -441,6 +435,12 @@ export default function ProfileTab() {
         <LogOut className="h-4 w-4" />
         Sign Out
       </Button>
+
+      {/* Settings Sheet */}
+      <CustomerSettingsSheet 
+        isOpen={isSettingsOpen} 
+        onClose={() => setIsSettingsOpen(false)} 
+      />
     </div>
   );
 }
