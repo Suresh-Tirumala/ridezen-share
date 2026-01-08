@@ -124,7 +124,7 @@ export default function Auth() {
         <Card variant="elevated" className="backdrop-blur-sm border-primary/10 shadow-glow">
           <CardHeader className="text-center pb-2">
             <div className="flex justify-center mb-2">
-              <img src={rideRentLogo} alt="RideRent" className="h-32 w-auto object-contain" />
+              <img src={rideRentLogo} alt="RideRent" className="h-40 w-auto object-contain" />
             </div>
             <CardDescription className="text-muted-foreground">
               {isLogin
