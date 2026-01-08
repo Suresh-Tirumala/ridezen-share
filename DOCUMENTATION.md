@@ -858,6 +858,48 @@ const { data: urlData } = supabase.storage
 // 6. Store URL in vehicle record
 ```
 
+### 12.3 Image Slideshow Viewer
+
+The `FullScreenImageViewer` component provides a carousel/slideshow experience for vehicles with multiple images.
+
+**Features:**
+- Full-screen modal display
+- Left/right navigation arrows for multiple images
+- Dot indicators for image position
+- Image counter display (e.g., "2 / 5")
+- Fade animation on image transitions
+- Keyboard-friendly navigation
+
+**VehicleThumbnail Integration:**
+- Shows primary image as thumbnail
+- Displays "+N" badge when multiple images exist
+- Opens slideshow on click with all images
+
+```typescript
+// Usage in components
+<VehicleThumbnail
+  vehicleType={vehicle.vehicle_type}
+  images={vehicle.images}  // Array of image URLs
+  className="h-16 w-16"
+/>
+
+// Direct FullScreenImageViewer usage
+<FullScreenImageViewer
+  images={imageArray}
+  initialIndex={0}
+  isOpen={isOpen}
+  onClose={() => setIsOpen(false)}
+  alt="Vehicle photos"
+/>
+```
+
+**Supported in:**
+- Customer Home page (vehicle listings)
+- Nearby tab (location-based vehicles)
+- Search tab (search results)
+- Owner dashboard (vehicle management)
+- Owner profile sheet (owner's vehicles)
+
 ---
 
 ## 13. Styling & Design System
