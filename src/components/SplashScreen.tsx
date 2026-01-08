@@ -32,16 +32,14 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
 
   return (
     <div className="fixed inset-0 z-50 bg-background flex items-center justify-center">
-      <div className="w-full max-w-sm animate-scale-in">
-        <video
-          src={splashVideo}
-          autoPlay
-          muted
-          playsInline
-          onEnded={handleVideoEnd}
-          className="w-full h-auto"
-        />
-      </div>
+      <video
+        src={splashVideo}
+        autoPlay
+        muted
+        playsInline
+        onEnded={handleVideoEnd}
+        className="w-full h-full object-cover"
+      />
     </div>
   );
 }
