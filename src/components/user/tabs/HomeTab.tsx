@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { VehicleThumbnail } from "@/components/vehicle/VehicleThumbnail";
-
+import dashboardVideo from "@/assets/RIDERENT_user_dashboard_1.mp4";
 type VehicleType = "car" | "bike" | "auto" | "bus";
 
 const vehicleCategories: { id: VehicleType; label: string; icon: typeof Car; color: string }[] = [
@@ -91,6 +91,18 @@ export default function HomeTab({ onChatWithOwner, onViewOwner }: HomeTabProps) 
 
   return (
     <div className="space-y-6">
+      {/* Promo Video */}
+      <section>
+        <video
+          src={dashboardVideo}
+          autoPlay
+          loop
+          muted
+          playsInline
+          className="w-full rounded-xl shadow-lg"
+        />
+      </section>
+
       {/* Vehicle Categories */}
       <section>
         <h2 className="text-lg font-bold mb-3">Browse by Category</h2>
