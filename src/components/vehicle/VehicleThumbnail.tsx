@@ -28,12 +28,14 @@ export function VehicleThumbnail({
   images?: string[] | null;
   className?: string;
 }) {
-  const primaryImage = useMemo(() => images?.[0] ?? null, [images]);
+  const validImages = useMemo(() => images?.filter(Boolean) ?? [], [images]);
+  const primaryImage = validImages[0] ?? null;
   const [isBroken, setIsBroken] = useState(false);
   const [isFullScreen, setIsFullScreen] = useState(false);
 
   const emoji = emojiForType(vehicleType);
   const hasImage = primaryImage && !isBroken;
+  const hasMultipleImages = validImages.length > 1;
 
   return (
     <>
@@ -47,13 +49,21 @@ export function VehicleThumbnail({
         onClick={() => hasImage && setIsFullScreen(true)}
       >
         {hasImage ? (
-          <img
-            src={primaryImage}
-            alt={`${vehicleType} rental vehicle photo`}
-            loading="lazy"
-            className="h-full w-full object-cover"
-            onError={() => setIsBroken(true)}
-          />
+          <>
+            <img
+              src={primaryImage}
+              alt={`${vehicleType} rental vehicle photo`}
+              loading="lazy"
+              className="h-full w-full object-cover"
+              onError={() => setIsBroken(true)}
+            />
+            {/* Multiple images indicator */}
+            {hasMultipleImages && (
+              <div className="absolute bottom-0.5 right-0.5 bg-black/60 text-white text-[10px] px-1 rounded">
+                +{validImages.length - 1}
+              </div>
+            )}
+          </>
         ) : (
           <span aria-hidden className="text-2xl">
             {emoji}
@@ -62,7 +72,8 @@ export function VehicleThumbnail({
       </div>
 
       <FullScreenImageViewer
-        imageUrl={primaryImage}
+        images={validImages}
+        initialIndex={0}
         isOpen={isFullScreen}
         onClose={() => setIsFullScreen(false)}
         alt={`${vehicleType} rental vehicle`}
