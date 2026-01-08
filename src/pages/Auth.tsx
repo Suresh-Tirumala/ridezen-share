@@ -10,7 +10,7 @@ import { User, ArrowRight, Mail, Lock, UserCircle, Car } from "lucide-react";
 
 import { z } from "zod";
 import SplashScreen from "@/components/SplashScreen";
-import logoVideo from "@/assets/RideRentLOGO_Login.mp4";
+
 
 const signUpSchema = z.object({
   fullName: z.string().min(2, "Name must be at least 2 characters"),
@@ -119,17 +119,6 @@ export default function Auth() {
 
   return (
     <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4">
-      {/* Animated Logo */}
-      <div className="mb-8 animate-fade-in">
-        <video
-          src={logoVideo}
-          autoPlay
-          loop
-          muted
-          playsInline
-          className="w-48 h-48 object-contain"
-        />
-      </div>
 
       <div className="w-full max-w-md animate-fade-in stagger-1">
         <Card variant="elevated" className="backdrop-blur-sm border-primary/10 shadow-glow">
