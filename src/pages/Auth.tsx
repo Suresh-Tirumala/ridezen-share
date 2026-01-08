@@ -127,7 +127,7 @@ export default function Auth() {
               <img src={rideRentLogo} alt="RideRent" className="h-32 w-auto object-contain" />
             </div>
             <CardDescription className="text-muted-foreground">
-              Freedom to Ride.
+              {selectedRole === "owner" ? "Turn Vehicles into Income." : "Freedom to Ride."}
             </CardDescription>
           </CardHeader>
 
