@@ -31,14 +31,14 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-background flex items-center justify-center p-8">
+    <div className="fixed inset-0 z-50 bg-background flex items-center justify-center p-8 md:p-0">
       <video
         src={splashVideo}
         autoPlay
         muted
         playsInline
         onEnded={handleVideoEnd}
-        className="w-full h-full max-w-2xl max-h-[80vh] object-contain"
+        className="w-full h-full max-w-2xl max-h-[80vh] object-contain md:max-w-none md:max-h-none md:object-cover"
       />
     </div>
   );
