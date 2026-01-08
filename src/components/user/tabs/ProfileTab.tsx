@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { 
   User, 
   Phone, 
@@ -16,11 +17,14 @@ import {
   Calendar,
   IndianRupee,
   LogOut,
-  History
+  History,
+  Moon,
+  Sun
 } from "lucide-react";
 import { VehicleThumbnail } from "@/components/vehicle/VehicleThumbnail";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useTheme } from "next-themes";
 
 interface Booking {
   id: string;
@@ -49,6 +53,7 @@ interface VehicleHistory {
 
 export default function ProfileTab() {
   const { user, profile, signOut, updateProfile } = useAuth();
+  const { theme, setTheme } = useTheme();
   const [isEditing, setIsEditing] = useState(false);
   const [editData, setEditData] = useState({
     full_name: profile?.full_name || "",
@@ -408,6 +413,26 @@ export default function ProfileTab() {
           <p className="text-xs text-muted-foreground text-center pt-2">
             Secure online payments for vehicle rentals
           </p>
+        </CardContent>
+      </Card>
+
+      {/* Dark Mode Toggle */}
+      <Card>
+        <CardContent className="py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              {theme === "dark" ? (
+                <Moon className="h-5 w-5 text-muted-foreground" />
+              ) : (
+                <Sun className="h-5 w-5 text-muted-foreground" />
+              )}
+              <span className="font-medium">Dark Mode</span>
+            </div>
+            <Switch 
+              checked={theme === "dark"}
+              onCheckedChange={(checked) => setTheme(checked ? "dark" : "light")}
+            />
+          </div>
         </CardContent>
       </Card>
 
