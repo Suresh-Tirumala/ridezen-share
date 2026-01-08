@@ -38,7 +38,7 @@ export default function Auth() {
 
     try {
       if (isLogin) {
-        const { error } = await signIn(email, password, selectedRole);
+        const { error } = await signIn(email, password);
         if (error) {
           toast({
             title: "Login Failed",
@@ -48,7 +48,7 @@ export default function Auth() {
         } else {
           toast({
             title: "Welcome back!",
-            description: `You have successfully logged in as ${selectedRole === "owner" ? "Owner" : "Customer"}.`,
+            description: "You have successfully logged in.",
           });
           navigate("/");
         }
@@ -132,40 +132,42 @@ export default function Auth() {
 
           <CardContent className="pt-4">
             <form onSubmit={handleSubmit} className="space-y-4">
-              {/* Role Selection - shown for both login and signup */}
-              <div className="space-y-2">
-                <Label>{isLogin ? "Sign in as" : "I want to"}</Label>
-                <div className="grid grid-cols-2 gap-3">
-                  <button
-                    type="button"
-                    onClick={() => setSelectedRole("user")}
-                    className={`p-4 rounded-xl border-2 transition-all duration-200 flex flex-col items-center gap-2 ${
-                      selectedRole === "user"
-                        ? "border-primary bg-primary/5 shadow-md"
-                        : "border-border hover:border-primary/50"
-                    }`}
-                  >
-                    <User className={`h-6 w-6 ${selectedRole === "user" ? "text-primary" : "text-muted-foreground"}`} />
-                    <span className={`text-sm font-medium ${selectedRole === "user" ? "text-primary" : "text-muted-foreground"}`}>
-                      {isLogin ? "Customer" : "Rent Vehicles"}
-                    </span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setSelectedRole("owner")}
-                    className={`p-4 rounded-xl border-2 transition-all duration-200 flex flex-col items-center gap-2 ${
-                      selectedRole === "owner"
-                        ? "border-accent bg-accent/5 shadow-md"
-                        : "border-border hover:border-accent/50"
-                    }`}
-                  >
-                    <Car className={`h-6 w-6 ${selectedRole === "owner" ? "text-accent" : "text-muted-foreground"}`} />
-                    <span className={`text-sm font-medium ${selectedRole === "owner" ? "text-accent" : "text-muted-foreground"}`}>
-                      {isLogin ? "Owner" : "List My Vehicles"}
-                    </span>
-                  </button>
+              {/* Role Selection - signup only */}
+              {!isLogin && (
+                <div className="space-y-2">
+                  <Label>I want to</Label>
+                  <div className="grid grid-cols-2 gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setSelectedRole("user")}
+                      className={`p-4 rounded-xl border-2 transition-all duration-200 flex flex-col items-center gap-2 ${
+                        selectedRole === "user"
+                          ? "border-primary bg-primary/5 shadow-md"
+                          : "border-border hover:border-primary/50"
+                      }`}
+                    >
+                      <User className={`h-6 w-6 ${selectedRole === "user" ? "text-primary" : "text-muted-foreground"}`} />
+                      <span className={`text-sm font-medium ${selectedRole === "user" ? "text-primary" : "text-muted-foreground"}`}>
+                        Rent Vehicles
+                      </span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setSelectedRole("owner")}
+                      className={`p-4 rounded-xl border-2 transition-all duration-200 flex flex-col items-center gap-2 ${
+                        selectedRole === "owner"
+                          ? "border-accent bg-accent/5 shadow-md"
+                          : "border-border hover:border-accent/50"
+                      }`}
+                    >
+                      <Car className={`h-6 w-6 ${selectedRole === "owner" ? "text-accent" : "text-muted-foreground"}`} />
+                      <span className={`text-sm font-medium ${selectedRole === "owner" ? "text-accent" : "text-muted-foreground"}`}>
+                        List My Vehicles
+                      </span>
+                    </button>
+                  </div>
                 </div>
-              </div>
+              )}
 
               {!isLogin && (
                 <>
