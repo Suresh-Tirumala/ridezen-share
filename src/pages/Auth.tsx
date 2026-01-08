@@ -10,7 +10,7 @@ import { User, ArrowRight, Mail, Lock, UserCircle, Car } from "lucide-react";
 
 import { z } from "zod";
 import SplashScreen from "@/components/SplashScreen";
-
+import rideRentLogo from "@/assets/RideRentLOGO-2.png";
 
 const signUpSchema = z.object({
   fullName: z.string().min(2, "Name must be at least 2 characters"),
@@ -123,9 +123,9 @@ export default function Auth() {
       <div className="w-full max-w-md animate-fade-in stagger-1">
         <Card variant="elevated" className="backdrop-blur-sm border-primary/10 shadow-glow">
           <CardHeader className="text-center pb-2">
-            <CardTitle className="text-2xl font-bold text-gradient">
-              {isLogin ? "Welcome Back" : "Create Account"}
-            </CardTitle>
+            <div className="flex justify-center mb-2">
+              <img src={rideRentLogo} alt="RideRent" className="h-16 w-auto object-contain" />
+            </div>
             <CardDescription className="text-muted-foreground">
               {isLogin
                 ? "Sign in to access your account"
