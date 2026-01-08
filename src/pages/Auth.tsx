@@ -126,7 +126,7 @@ export default function Auth() {
             <div className="flex justify-center mb-2">
               <img src={rideRentLogo} alt="RideRent" className="h-32 w-auto object-contain" />
             </div>
-            <CardDescription className="text-muted-foreground">
+            <CardDescription className="text-muted-foreground text-base">
               {selectedRole === "owner" ? "Turn Vehicles into Income." : "Freedom to Ride."}
             </CardDescription>
           </CardHeader>
