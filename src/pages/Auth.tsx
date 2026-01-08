@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,6 +10,7 @@ import { User, ArrowRight, Mail, Lock, UserCircle, Car } from "lucide-react";
 
 import { z } from "zod";
 import SplashScreen from "@/components/SplashScreen";
+import logoVideo from "@/assets/RideRentLOGO_Login.mp4";
 
 const signUpSchema = z.object({
   fullName: z.string().min(2, "Name must be at least 2 characters"),
@@ -117,15 +118,26 @@ export default function Auth() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-hero flex items-center justify-center p-4">
-      <div className="w-full max-w-md animate-fade-in">
+    <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4">
+      {/* Animated Logo */}
+      <div className="mb-8 animate-fade-in">
+        <video
+          src={logoVideo}
+          autoPlay
+          loop
+          muted
+          playsInline
+          className="w-48 h-48 object-contain"
+        />
+      </div>
 
-        <Card variant="elevated" className="backdrop-blur-sm">
+      <div className="w-full max-w-md animate-fade-in stagger-1">
+        <Card variant="elevated" className="backdrop-blur-sm border-primary/10 shadow-glow">
           <CardHeader className="text-center pb-2">
-            <CardTitle className="text-2xl">
+            <CardTitle className="text-2xl font-bold text-gradient">
               {isLogin ? "Welcome Back" : "Create Account"}
             </CardTitle>
-            <CardDescription>
+            <CardDescription className="text-muted-foreground">
               {isLogin
                 ? "Sign in to access your account"
                 : "Join RideRent and start your journey"}
@@ -136,33 +148,33 @@ export default function Auth() {
             <form onSubmit={handleSubmit} className="space-y-4">
               {/* Role Selection - shown for both login and signup */}
               <div className="space-y-2">
-                <Label>{isLogin ? "Sign in as" : "I want to"}</Label>
+                <Label className="text-foreground/80">{isLogin ? "Sign in as" : "I want to"}</Label>
                 <div className="grid grid-cols-2 gap-3">
                   <button
                     type="button"
                     onClick={() => setSelectedRole("user")}
-                    className={`p-4 rounded-xl border-2 transition-all duration-200 flex flex-col items-center gap-2 ${
+                    className={`p-4 rounded-xl border-2 transition-all duration-300 flex flex-col items-center gap-2 ${
                       selectedRole === "user"
-                        ? "border-primary bg-primary/5 shadow-md"
-                        : "border-border hover:border-primary/50"
+                        ? "border-primary bg-primary/10 shadow-glow"
+                        : "border-border/50 hover:border-primary/50 hover:bg-primary/5"
                     }`}
                   >
-                    <User className={`h-6 w-6 ${selectedRole === "user" ? "text-primary" : "text-muted-foreground"}`} />
-                    <span className={`text-sm font-medium ${selectedRole === "user" ? "text-primary" : "text-muted-foreground"}`}>
+                    <User className={`h-6 w-6 transition-colors ${selectedRole === "user" ? "text-primary" : "text-muted-foreground"}`} />
+                    <span className={`text-sm font-medium transition-colors ${selectedRole === "user" ? "text-primary" : "text-muted-foreground"}`}>
                       {isLogin ? "Customer" : "Rent Vehicles"}
                     </span>
                   </button>
                   <button
                     type="button"
                     onClick={() => setSelectedRole("owner")}
-                    className={`p-4 rounded-xl border-2 transition-all duration-200 flex flex-col items-center gap-2 ${
+                    className={`p-4 rounded-xl border-2 transition-all duration-300 flex flex-col items-center gap-2 ${
                       selectedRole === "owner"
-                        ? "border-accent bg-accent/5 shadow-md"
-                        : "border-border hover:border-accent/50"
+                        ? "border-accent bg-accent/10 shadow-accent"
+                        : "border-border/50 hover:border-accent/50 hover:bg-accent/5"
                     }`}
                   >
-                    <Car className={`h-6 w-6 ${selectedRole === "owner" ? "text-accent" : "text-muted-foreground"}`} />
-                    <span className={`text-sm font-medium ${selectedRole === "owner" ? "text-accent" : "text-muted-foreground"}`}>
+                    <Car className={`h-6 w-6 transition-colors ${selectedRole === "owner" ? "text-accent" : "text-muted-foreground"}`} />
+                    <span className={`text-sm font-medium transition-colors ${selectedRole === "owner" ? "text-accent" : "text-muted-foreground"}`}>
                       {isLogin ? "Owner" : "List My Vehicles"}
                     </span>
                   </button>
@@ -173,7 +185,7 @@ export default function Auth() {
                 <>
                   {/* Full Name */}
                   <div className="space-y-2">
-                    <Label htmlFor="fullName">Full Name</Label>
+                    <Label htmlFor="fullName" className="text-foreground/80">Full Name</Label>
                     <div className="relative">
                       <UserCircle className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                       <Input
@@ -181,7 +193,7 @@ export default function Auth() {
                         placeholder="John Doe"
                         value={fullName}
                         onChange={(e) => setFullName(e.target.value)}
-                        className="pl-10"
+                        className="pl-10 bg-muted/30 border-border/50 focus:border-primary"
                       />
                     </div>
                     {errors.fullName && (
@@ -193,7 +205,7 @@ export default function Auth() {
 
               {/* Email */}
               <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="email" className="text-foreground/80">Email</Label>
                 <div className="relative">
                   <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                   <Input
@@ -202,7 +214,7 @@ export default function Auth() {
                     placeholder="you@example.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="pl-10"
+                    className="pl-10 bg-muted/30 border-border/50 focus:border-primary"
                   />
                 </div>
                 {errors.email && (
@@ -212,7 +224,7 @@ export default function Auth() {
 
               {/* Password */}
               <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
+                <Label htmlFor="password" className="text-foreground/80">Password</Label>
                 <div className="relative">
                   <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                   <Input
@@ -221,7 +233,7 @@ export default function Auth() {
                     placeholder="••••••••"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="pl-10"
+                    className="pl-10 bg-muted/30 border-border/50 focus:border-primary"
                   />
                 </div>
                 {errors.password && (
@@ -229,7 +241,7 @@ export default function Auth() {
                 )}
               </div>
 
-              <Button type="submit" className="w-full" size="lg" disabled={loading}>
+              <Button type="submit" className="w-full shadow-glow" size="lg" disabled={loading}>
                 {loading ? (
                   <span className="flex items-center gap-2">
                     <span className="h-4 w-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
@@ -253,7 +265,7 @@ export default function Auth() {
                     setIsLogin(!isLogin);
                     setErrors({});
                   }}
-                  className="text-primary font-semibold hover:underline"
+                  className="text-primary font-semibold hover:underline transition-all"
                 >
                   {isLogin ? "Sign Up" : "Sign In"}
                 </button>
