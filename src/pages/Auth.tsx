@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { User, ArrowRight, Mail, Lock, UserCircle, Car } from "lucide-react";
-import RideRentLogo from "@/assets/RideRentLOGO.png";
+
 import { z } from "zod";
 import SplashScreen from "@/components/SplashScreen";
 
@@ -119,12 +119,6 @@ export default function Auth() {
   return (
     <div className="min-h-screen bg-gradient-hero flex items-center justify-center p-4">
       <div className="w-full max-w-md animate-fade-in">
-        {/* Logo */}
-        <Link to="/" className="flex items-center justify-center mb-8">
-          <div className="p-4 rounded-2xl bg-card shadow-lg">
-            <img src={RideRentLogo} alt="RideRent" className="h-24 w-auto" />
-          </div>
-        </Link>
 
         <Card variant="elevated" className="backdrop-blur-sm">
           <CardHeader className="text-center pb-2">
