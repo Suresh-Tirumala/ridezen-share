@@ -25,6 +25,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
+import { useTheme } from "next-themes";
 
 interface OwnerSettingsSheetProps {
   isOpen: boolean;
@@ -33,6 +34,7 @@ interface OwnerSettingsSheetProps {
 
 export default function OwnerSettingsSheet({ isOpen, onClose }: OwnerSettingsSheetProps) {
   const { profile, updateProfile } = useAuth();
+  const { theme, setTheme } = useTheme();
   const [activeSection, setActiveSection] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   
@@ -149,10 +151,17 @@ export default function OwnerSettingsSheet({ isOpen, onClose }: OwnerSettingsShe
       <Card className="p-4 mt-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Moon className="h-5 w-5 text-muted-foreground" />
+            {theme === "dark" ? (
+              <Moon className="h-5 w-5 text-muted-foreground" />
+            ) : (
+              <Sun className="h-5 w-5 text-muted-foreground" />
+            )}
             <span className="font-medium">Dark Mode</span>
           </div>
-          <Switch />
+          <Switch 
+            checked={theme === "dark"}
+            onCheckedChange={(checked) => setTheme(checked ? "dark" : "light")}
+          />
         </div>
       </Card>
     </div>
