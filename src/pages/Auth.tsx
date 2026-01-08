@@ -148,7 +148,7 @@ export default function Auth() {
                   >
                     <User className={`h-6 w-6 transition-colors ${selectedRole === "user" ? "text-primary" : "text-muted-foreground"}`} />
                     <span className={`text-sm font-medium transition-colors ${selectedRole === "user" ? "text-primary" : "text-muted-foreground"}`}>
-                      {isLogin ? "Customer" : "Rent Vehicles"}
+                      {isLogin ? "Customer" : "Search Vehicles"}
                     </span>
                   </button>
                   <button
