@@ -67,11 +67,10 @@ export default function HomeTab({ onChatWithOwner, onViewOwner }: HomeTabProps) 
   const fetchVehicles = async () => {
     setLoading(true);
     try {
+      // Use vehicles_public view to exclude sensitive data like registration_number
       let query = supabase
-        .from("vehicles")
-        .select("*")
-        .eq("is_available", true)
-        .eq("is_disabled", false);
+        .from("vehicles_public")
+        .select("*");
 
       if (selectedCategory) {
         query = query.eq("vehicle_type", selectedCategory);

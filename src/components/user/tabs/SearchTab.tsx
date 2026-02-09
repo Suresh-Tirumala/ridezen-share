@@ -35,17 +35,19 @@ export default function SearchTab({ onChatWithOwner, onViewOwner }: SearchTabPro
       return;
     }
 
+    // Sanitize search query to prevent injection
+    const sanitizedQuery = searchQuery.trim().replace(/[%_\\]/g, '\\$&');
+
     setLoading(true);
     setHasSearched(true);
 
     try {
+      // Use vehicles_public view to exclude sensitive data like registration_number
       const { data, error } = await supabase
-        .from("vehicles")
+        .from("vehicles_public")
         .select("*")
-        .eq("is_available", true)
-        .eq("is_disabled", false)
         .or(
-          `brand.ilike.%${searchQuery}%,model.ilike.%${searchQuery}%,vehicle_type.ilike.%${searchQuery}%,location_address.ilike.%${searchQuery}%`
+          `brand.ilike.%${sanitizedQuery}%,model.ilike.%${sanitizedQuery}%,vehicle_type.ilike.%${sanitizedQuery}%,location_address.ilike.%${sanitizedQuery}%`
         );
 
       if (error) throw error;

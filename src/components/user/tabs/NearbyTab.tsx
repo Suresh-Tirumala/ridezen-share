@@ -75,11 +75,10 @@ export default function NearbyTab({ onChatWithOwner, onViewOwner }: NearbyTabPro
 
   const fetchNearbyVehicles = async (lat: number, lng: number) => {
     try {
+      // Use vehicles_public view to exclude sensitive data like registration_number
       const { data, error } = await supabase
-        .from("vehicles")
+        .from("vehicles_public")
         .select("*")
-        .eq("is_available", true)
-        .eq("is_disabled", false)
         .not("location_lat", "is", null)
         .not("location_lng", "is", null);
 
