@@ -110,8 +110,18 @@ export default function OwnerDashboard() {
   });
 
   const validatePrice = (priceStr: string): number => {
-    const price = parseFloat(priceStr);
-    if (isNaN(price)) {
+    // Sanitize input: trim whitespace
+    const trimmedPrice = priceStr.trim();
+    
+    // Reject invalid patterns (scientific notation, special values, invalid formats)
+    if (!/^[0-9]+(\.[0-9]{1,2})?$/.test(trimmedPrice)) {
+      throw new Error("Invalid price format: Please enter a valid number (e.g., 500 or 500.50)");
+    }
+    
+    const price = parseFloat(trimmedPrice);
+    
+    // Additional safety checks for edge cases
+    if (!Number.isFinite(price) || isNaN(price)) {
       throw new Error("Invalid price: Please enter a valid number");
     }
     if (price <= 0) {
